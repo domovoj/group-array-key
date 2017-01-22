@@ -1,13 +1,13 @@
 {
-  "name": "group-array-key",
+  "name": "unflatten",
   "version": "0.0.1",
-  "description": "Unflat and group array by key with additional properties and children",
+  "description": "Unflatten and group array by key with additional properties and children",
   "main": "index.js",
   "author": "",
   "license": "ISC",
   "scripts": {
-    "commonjs": "babel --plugins transform-es2015-modules-commonjs unflat.es2015.js --out-file unflat.commonjs.js",
-    "browser": "babel unflat.es2015.js --out-file unflat.browser.js && webpack",
+    "commonjs": "babel --plugins transform-es2015-modules-commonjs unflatten.es2015.js --out-file unflatten.commonjs.js",
+    "browser": "babel unflatten.es2015.js --out-file unflatten.browser.js && webpack",
     "build-all": "npm run commonjs && npm run browser"
   },
   "dependencies": {

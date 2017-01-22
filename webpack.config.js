@@ -1,9 +1,9 @@
 module.exports = {
     entry: {
-        'unflat.browser': './unflat.browser'
+        'unflatten.browser': './unflatten.browser'
     },
     output: {
-        library: 'unflat',
+        library: 'unflatten',
         path: __dirname,
         filename: '[name].js'
     }

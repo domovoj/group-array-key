@@ -7,6 +7,6 @@
 
 'use strict';
 
-var unflat = require('./unflat.common');
+var unflat = require('./unflatten.common');
 
 module.exports = unflat;
