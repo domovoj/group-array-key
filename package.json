@@ -6,7 +6,7 @@
   "author": "",
   "license": "ISC",
   "scripts": {
-    "commonjs": "babel --plugins transform-es2015-modules-commonjs unflat.es2015.js --out-file unflat.common.js",
+    "commonjs": "babel --plugins transform-es2015-modules-commonjs unflat.es2015.js --out-file unflat.commonjs.js",
     "browser": "babel unflat.es2015.js --out-file unflat.browser.js && webpack",
     "build-all": "npm run commonjs && npm run browser"
   },
