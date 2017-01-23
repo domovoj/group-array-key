@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import sortOrderBy from 'sort-order-by';
 
 class EntityModel {
     constructor (item, parent, parentName, entities) {
@@ -54,12 +55,13 @@ class Unflat {
     setEntity (arr, current) {
         const tempArr = [];
 
-        _.each(_.groupBy(arr, current.id), (items, childKey) => {
+        _.each(_.groupBy(arr, current.id), items => {
             const entity = {};
-
-            entity[current.id] = childKey;
-
             const firstItem = items[0];
+
+            // get id from first item because _.each converts key to string
+            entity[current.id] = firstItem[current.id];
+
             _.each(current.props, prop => {
                 // get value for prop from first item in array - use only common props for entity
                 entity[prop] = firstItem[prop];
@@ -155,55 +157,10 @@ class Unflat {
         return item[children];
     }
 
-    customSort (items, sortBy) {
-        let res = [];
-        for (let i = 0; i < sortBy.length; i++) {
-            const sortObject = sortBy[i];
-            for (const key in sortObject) {
-                if (!sortObject.hasOwnProperty(key)) {
-                    continue;
-                }
-                let tempArr = [];
-                // custom sort entity
-                const sortItem = sortObject[key];
-
-                // if not string breaks next steps
-                if (_.isFunction(sortItem)) {
-                    const resultCallback = sortItem(items, key);
-
-                    return _.concat(res, resultCallback);
-                }
-                // sorts by splitted string (clears items) for next steps "custom sort"
-                if (_.isString(sortItem)) {
-                    const sortItemSplitted = _.split(sortItem, ',');
-
-                    _.each(sortItemSplitted, value => {
-                        const findObject = {};
-
-                        value = _.trim(value);
-                        findObject[key] = value;
-                        const finded = _.find(items, findObject);
-
-                        if (finded) {
-                            tempArr.push(finded);
-
-                            // remove just added item for accelerating next steps
-                            items.splice(_.findIndex(items, findObject), 1);
-                        }
-                    });
-
-                    res = _.concat(res, tempArr);
-                }
-            }
-        }
-        // prepends items which left after "custom sort"
-        return _.concat(res, items);
-    }
-
     sort (items, sortBy) {
         // detecting custom sort
         if (_.isArray(sortBy) && _.isPlainObject(sortBy[0])) {
-            return this.customSort(items, sortBy);
+            return sortOrderBy(items, sortBy);
         }
         return _.sortBy(items, sortBy);
     }

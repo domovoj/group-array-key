@@ -1,5 +1,5 @@
 /*!
- * group-array <https://github.com/domovoj/group-array-key>
+ * unflatten <https://github.com/domovoj/unflatten>
  *
  * Copyright (c) 2017, Yura Levantovych.
  * Licensed under the MIT License.
@@ -7,6 +7,6 @@
 
 'use strict';
 
-var unflat = require('./unflatten.commonjs');
+var unflatten = require('./unflatten.commonjs');
 
-module.exports = unflat;
+module.exports = unflatten;

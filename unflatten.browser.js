@@ -63,61 +63,43 @@ var unflatten =
 
 	var _isArray3 = _interopRequireDefault(_isArray2);
 
-	var _findIndex2 = __webpack_require__(143);
-
-	var _findIndex3 = _interopRequireDefault(_findIndex2);
-
-	var _trim2 = __webpack_require__(148);
-
-	var _trim3 = _interopRequireDefault(_trim2);
-
-	var _split2 = __webpack_require__(160);
-
-	var _split3 = _interopRequireDefault(_split2);
-
-	var _isString2 = __webpack_require__(163);
-
-	var _isString3 = _interopRequireDefault(_isString2);
-
-	var _isFunction2 = __webpack_require__(34);
-
-	var _isFunction3 = _interopRequireDefault(_isFunction2);
-
-	var _concat2 = __webpack_require__(164);
+	var _concat2 = __webpack_require__(143);
 
 	var _concat3 = _interopRequireDefault(_concat2);
 
-	var _map2 = __webpack_require__(166);
+	var _map2 = __webpack_require__(145);
 
 	var _map3 = _interopRequireDefault(_map2);
 
-	var _groupBy2 = __webpack_require__(167);
+	var _groupBy2 = __webpack_require__(146);
 
 	var _groupBy3 = _interopRequireDefault(_groupBy2);
 
-	var _isUndefined2 = __webpack_require__(172);
+	var _isUndefined2 = __webpack_require__(151);
 
 	var _isUndefined3 = _interopRequireDefault(_isUndefined2);
 
-	var _each2 = __webpack_require__(173);
+	var _each2 = __webpack_require__(152);
 
 	var _each3 = _interopRequireDefault(_each2);
 
-	var _filter2 = __webpack_require__(177);
+	var _filter2 = __webpack_require__(156);
 
 	var _filter3 = _interopRequireDefault(_filter2);
 
-	var _find2 = __webpack_require__(179);
+	var _find2 = __webpack_require__(158);
 
 	var _find3 = _interopRequireDefault(_find2);
 
-	var _assign2 = __webpack_require__(181);
+	var _assign2 = __webpack_require__(165);
 
 	var _assign3 = _interopRequireDefault(_assign2);
 
-	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _sortOrderBy = __webpack_require__(169);
+
+	var _sortOrderBy2 = _interopRequireDefault(_sortOrderBy);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -196,12 +178,13 @@ var unflatten =
 	        value: function setEntity(arr, current) {
 	            var tempArr = [];
 
-	            (0, _each3.default)((0, _groupBy3.default)(arr, current.id), function (items, childKey) {
+	            (0, _each3.default)((0, _groupBy3.default)(arr, current.id), function (items) {
 	                var entity = {};
-
-	                entity[current.id] = childKey;
-
 	                var firstItem = items[0];
+
+	                // get id from first item because _.each converts key to string
+	                entity[current.id] = firstItem[current.id];
+
 	                (0, _each3.default)(current.props, function (prop) {
 	                    // get value for prop from first item in array - use only common props for entity
 	                    entity[prop] = firstItem[prop];
@@ -316,72 +299,11 @@ var unflatten =
 	            return item[children];
 	        }
 	    }, {
-	        key: 'customSort',
-	        value: function customSort(items, sortBy) {
-	            var res = [];
-	            for (var i = 0; i < sortBy.length; i++) {
-	                var sortObject = sortBy[i];
-
-	                var _loop = function _loop(key) {
-	                    if (!sortObject.hasOwnProperty(key)) {
-	                        return 'continue';
-	                    }
-	                    var tempArr = [];
-	                    // custom sort entity
-	                    var sortItem = sortObject[key];
-
-	                    // if not string breaks next steps
-	                    if ((0, _isFunction3.default)(sortItem)) {
-	                        var resultCallback = sortItem(items, key);
-
-	                        return {
-	                            v: (0, _concat3.default)(res, resultCallback)
-	                        };
-	                    }
-	                    // sorts by splitted string (clears items) for next steps "custom sort"
-	                    if ((0, _isString3.default)(sortItem)) {
-	                        var sortItemSplitted = (0, _split3.default)(sortItem, ',');
-
-	                        (0, _each3.default)(sortItemSplitted, function (value) {
-	                            var findObject = {};
-
-	                            value = (0, _trim3.default)(value);
-	                            findObject[key] = value;
-	                            var finded = (0, _find3.default)(items, findObject);
-
-	                            if (finded) {
-	                                tempArr.push(finded);
-
-	                                // remove just added item for accelerating next steps
-	                                items.splice((0, _findIndex3.default)(items, findObject), 1);
-	                            }
-	                        });
-
-	                        res = (0, _concat3.default)(res, tempArr);
-	                    }
-	                };
-
-	                for (var key in sortObject) {
-	                    var _ret = _loop(key);
-
-	                    switch (_ret) {
-	                        case 'continue':
-	                            continue;
-
-	                        default:
-	                            if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
-	                    }
-	                }
-	            }
-	            // prepends items which left after "custom sort"
-	            return (0, _concat3.default)(res, items);
-	        }
-	    }, {
 	        key: 'sort',
 	        value: function sort(items, sortBy) {
 	            // detecting custom sort
 	            if ((0, _isArray3.default)(sortBy) && (0, _isPlainObject3.default)(sortBy[0])) {
-	                return this.customSort(items, sortBy);
+	                return (0, _sortOrderBy2.default)(items, sortBy);
 	            }
 	            return (0, _sortBy3.default)(items, sortBy);
 	        }
@@ -5033,9 +4955,595 @@ var unflatten =
 /* 143 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseFindIndex = __webpack_require__(144),
+	var arrayPush = __webpack_require__(91),
+	    baseFlatten = __webpack_require__(125),
+	    copyArray = __webpack_require__(144),
+	    isArray = __webpack_require__(19);
+
+	/**
+	 * Creates a new array concatenating `array` with any additional arrays
+	 * and/or values.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Array
+	 * @param {Array} array The array to concatenate.
+	 * @param {...*} [values] The values to concatenate.
+	 * @returns {Array} Returns the new concatenated array.
+	 * @example
+	 *
+	 * var array = [1];
+	 * var other = _.concat(array, 2, [3], [[4]]);
+	 *
+	 * console.log(other);
+	 * // => [1, 2, 3, [4]]
+	 *
+	 * console.log(array);
+	 * // => [1]
+	 */
+	function concat() {
+	  var length = arguments.length;
+	  if (!length) {
+	    return [];
+	  }
+	  var args = Array(length - 1),
+	      array = arguments[0],
+	      index = length;
+
+	  while (index--) {
+	    args[index - 1] = arguments[index];
+	  }
+	  return arrayPush(isArray(array) ? copyArray(array) : [array], baseFlatten(args, 1));
+	}
+
+	module.exports = concat;
+
+
+/***/ },
+/* 144 */
+/***/ function(module, exports) {
+
+	/**
+	 * Copies the values of `source` to `array`.
+	 *
+	 * @private
+	 * @param {Array} source The array to copy values from.
+	 * @param {Array} [array=[]] The array to copy values to.
+	 * @returns {Array} Returns `array`.
+	 */
+	function copyArray(source, array) {
+	  var index = -1,
+	      length = source.length;
+
+	  array || (array = Array(length));
+	  while (++index < length) {
+	    array[index] = source[index];
+	  }
+	  return array;
+	}
+
+	module.exports = copyArray;
+
+
+/***/ },
+/* 145 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var arrayMap = __webpack_require__(114),
 	    baseIteratee = __webpack_require__(37),
-	    toInteger = __webpack_require__(145);
+	    baseMap = __webpack_require__(128),
+	    isArray = __webpack_require__(19);
+
+	/**
+	 * Creates an array of values by running each element in `collection` thru
+	 * `iteratee`. The iteratee is invoked with three arguments:
+	 * (value, index|key, collection).
+	 *
+	 * Many lodash methods are guarded to work as iteratees for methods like
+	 * `_.every`, `_.filter`, `_.map`, `_.mapValues`, `_.reject`, and `_.some`.
+	 *
+	 * The guarded methods are:
+	 * `ary`, `chunk`, `curry`, `curryRight`, `drop`, `dropRight`, `every`,
+	 * `fill`, `invert`, `parseInt`, `random`, `range`, `rangeRight`, `repeat`,
+	 * `sampleSize`, `slice`, `some`, `sortBy`, `split`, `take`, `takeRight`,
+	 * `template`, `trim`, `trimEnd`, `trimStart`, and `words`
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Collection
+	 * @param {Array|Object} collection The collection to iterate over.
+	 * @param {Function} [iteratee=_.identity] The function invoked per iteration.
+	 * @returns {Array} Returns the new mapped array.
+	 * @example
+	 *
+	 * function square(n) {
+	 *   return n * n;
+	 * }
+	 *
+	 * _.map([4, 8], square);
+	 * // => [16, 64]
+	 *
+	 * _.map({ 'a': 4, 'b': 8 }, square);
+	 * // => [16, 64] (iteration order is not guaranteed)
+	 *
+	 * var users = [
+	 *   { 'user': 'barney' },
+	 *   { 'user': 'fred' }
+	 * ];
+	 *
+	 * // The `_.property` iteratee shorthand.
+	 * _.map(users, 'user');
+	 * // => ['barney', 'fred']
+	 */
+	function map(collection, iteratee) {
+	  var func = isArray(collection) ? arrayMap : baseMap;
+	  return func(collection, baseIteratee(iteratee, 3));
+	}
+
+	module.exports = map;
+
+
+/***/ },
+/* 146 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseAssignValue = __webpack_require__(147),
+	    createAggregator = __webpack_require__(148);
+
+	/** Used for built-in method references. */
+	var objectProto = Object.prototype;
+
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+
+	/**
+	 * Creates an object composed of keys generated from the results of running
+	 * each element of `collection` thru `iteratee`. The order of grouped values
+	 * is determined by the order they occur in `collection`. The corresponding
+	 * value of each key is an array of elements responsible for generating the
+	 * key. The iteratee is invoked with one argument: (value).
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Collection
+	 * @param {Array|Object} collection The collection to iterate over.
+	 * @param {Function} [iteratee=_.identity] The iteratee to transform keys.
+	 * @returns {Object} Returns the composed aggregate object.
+	 * @example
+	 *
+	 * _.groupBy([6.1, 4.2, 6.3], Math.floor);
+	 * // => { '4': [4.2], '6': [6.1, 6.3] }
+	 *
+	 * // The `_.property` iteratee shorthand.
+	 * _.groupBy(['one', 'two', 'three'], 'length');
+	 * // => { '3': ['one', 'two'], '5': ['three'] }
+	 */
+	var groupBy = createAggregator(function(result, value, key) {
+	  if (hasOwnProperty.call(result, key)) {
+	    result[key].push(value);
+	  } else {
+	    baseAssignValue(result, key, [value]);
+	  }
+	});
+
+	module.exports = groupBy;
+
+
+/***/ },
+/* 147 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var defineProperty = __webpack_require__(138);
+
+	/**
+	 * The base implementation of `assignValue` and `assignMergeValue` without
+	 * value checks.
+	 *
+	 * @private
+	 * @param {Object} object The object to modify.
+	 * @param {string} key The key of the property to assign.
+	 * @param {*} value The value to assign.
+	 */
+	function baseAssignValue(object, key, value) {
+	  if (key == '__proto__' && defineProperty) {
+	    defineProperty(object, key, {
+	      'configurable': true,
+	      'enumerable': true,
+	      'value': value,
+	      'writable': true
+	    });
+	  } else {
+	    object[key] = value;
+	  }
+	}
+
+	module.exports = baseAssignValue;
+
+
+/***/ },
+/* 148 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var arrayAggregator = __webpack_require__(149),
+	    baseAggregator = __webpack_require__(150),
+	    baseIteratee = __webpack_require__(37),
+	    isArray = __webpack_require__(19);
+
+	/**
+	 * Creates a function like `_.groupBy`.
+	 *
+	 * @private
+	 * @param {Function} setter The function to set accumulator values.
+	 * @param {Function} [initializer] The accumulator object initializer.
+	 * @returns {Function} Returns the new aggregator function.
+	 */
+	function createAggregator(setter, initializer) {
+	  return function(collection, iteratee) {
+	    var func = isArray(collection) ? arrayAggregator : baseAggregator,
+	        accumulator = initializer ? initializer() : {};
+
+	    return func(collection, setter, baseIteratee(iteratee, 2), accumulator);
+	  };
+	}
+
+	module.exports = createAggregator;
+
+
+/***/ },
+/* 149 */
+/***/ function(module, exports) {
+
+	/**
+	 * A specialized version of `baseAggregator` for arrays.
+	 *
+	 * @private
+	 * @param {Array} [array] The array to iterate over.
+	 * @param {Function} setter The function to set `accumulator` values.
+	 * @param {Function} iteratee The iteratee to transform keys.
+	 * @param {Object} accumulator The initial aggregated object.
+	 * @returns {Function} Returns `accumulator`.
+	 */
+	function arrayAggregator(array, setter, iteratee, accumulator) {
+	  var index = -1,
+	      length = array == null ? 0 : array.length;
+
+	  while (++index < length) {
+	    var value = array[index];
+	    setter(accumulator, value, iteratee(value), array);
+	  }
+	  return accumulator;
+	}
+
+	module.exports = arrayAggregator;
+
+
+/***/ },
+/* 150 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseEach = __webpack_require__(3);
+
+	/**
+	 * Aggregates elements of `collection` on `accumulator` with keys transformed
+	 * by `iteratee` and values set by `setter`.
+	 *
+	 * @private
+	 * @param {Array|Object} collection The collection to iterate over.
+	 * @param {Function} setter The function to set `accumulator` values.
+	 * @param {Function} iteratee The iteratee to transform keys.
+	 * @param {Object} accumulator The initial aggregated object.
+	 * @returns {Function} Returns `accumulator`.
+	 */
+	function baseAggregator(collection, setter, iteratee, accumulator) {
+	  baseEach(collection, function(value, key, collection) {
+	    setter(accumulator, value, iteratee(value), collection);
+	  });
+	  return accumulator;
+	}
+
+	module.exports = baseAggregator;
+
+
+/***/ },
+/* 151 */
+/***/ function(module, exports) {
+
+	/**
+	 * Checks if `value` is `undefined`.
+	 *
+	 * @static
+	 * @since 0.1.0
+	 * @memberOf _
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is `undefined`, else `false`.
+	 * @example
+	 *
+	 * _.isUndefined(void 0);
+	 * // => true
+	 *
+	 * _.isUndefined(null);
+	 * // => false
+	 */
+	function isUndefined(value) {
+	  return value === undefined;
+	}
+
+	module.exports = isUndefined;
+
+
+/***/ },
+/* 152 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = __webpack_require__(153);
+
+
+/***/ },
+/* 153 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var arrayEach = __webpack_require__(154),
+	    baseEach = __webpack_require__(3),
+	    castFunction = __webpack_require__(155),
+	    isArray = __webpack_require__(19);
+
+	/**
+	 * Iterates over elements of `collection` and invokes `iteratee` for each element.
+	 * The iteratee is invoked with three arguments: (value, index|key, collection).
+	 * Iteratee functions may exit iteration early by explicitly returning `false`.
+	 *
+	 * **Note:** As with other "Collections" methods, objects with a "length"
+	 * property are iterated like arrays. To avoid this behavior use `_.forIn`
+	 * or `_.forOwn` for object iteration.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @alias each
+	 * @category Collection
+	 * @param {Array|Object} collection The collection to iterate over.
+	 * @param {Function} [iteratee=_.identity] The function invoked per iteration.
+	 * @returns {Array|Object} Returns `collection`.
+	 * @see _.forEachRight
+	 * @example
+	 *
+	 * _.forEach([1, 2], function(value) {
+	 *   console.log(value);
+	 * });
+	 * // => Logs `1` then `2`.
+	 *
+	 * _.forEach({ 'a': 1, 'b': 2 }, function(value, key) {
+	 *   console.log(key);
+	 * });
+	 * // => Logs 'a' then 'b' (iteration order is not guaranteed).
+	 */
+	function forEach(collection, iteratee) {
+	  var func = isArray(collection) ? arrayEach : baseEach;
+	  return func(collection, castFunction(iteratee));
+	}
+
+	module.exports = forEach;
+
+
+/***/ },
+/* 154 */
+/***/ function(module, exports) {
+
+	/**
+	 * A specialized version of `_.forEach` for arrays without support for
+	 * iteratee shorthands.
+	 *
+	 * @private
+	 * @param {Array} [array] The array to iterate over.
+	 * @param {Function} iteratee The function invoked per iteration.
+	 * @returns {Array} Returns `array`.
+	 */
+	function arrayEach(array, iteratee) {
+	  var index = -1,
+	      length = array == null ? 0 : array.length;
+
+	  while (++index < length) {
+	    if (iteratee(array[index], index, array) === false) {
+	      break;
+	    }
+	  }
+	  return array;
+	}
+
+	module.exports = arrayEach;
+
+
+/***/ },
+/* 155 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var identity = __webpack_require__(119);
+
+	/**
+	 * Casts `value` to `identity` if it's not a function.
+	 *
+	 * @private
+	 * @param {*} value The value to inspect.
+	 * @returns {Function} Returns cast function.
+	 */
+	function castFunction(value) {
+	  return typeof value == 'function' ? value : identity;
+	}
+
+	module.exports = castFunction;
+
+
+/***/ },
+/* 156 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var arrayFilter = __webpack_require__(93),
+	    baseFilter = __webpack_require__(157),
+	    baseIteratee = __webpack_require__(37),
+	    isArray = __webpack_require__(19);
+
+	/**
+	 * Iterates over elements of `collection`, returning an array of all elements
+	 * `predicate` returns truthy for. The predicate is invoked with three
+	 * arguments: (value, index|key, collection).
+	 *
+	 * **Note:** Unlike `_.remove`, this method returns a new array.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Collection
+	 * @param {Array|Object} collection The collection to iterate over.
+	 * @param {Function} [predicate=_.identity] The function invoked per iteration.
+	 * @returns {Array} Returns the new filtered array.
+	 * @see _.reject
+	 * @example
+	 *
+	 * var users = [
+	 *   { 'user': 'barney', 'age': 36, 'active': true },
+	 *   { 'user': 'fred',   'age': 40, 'active': false }
+	 * ];
+	 *
+	 * _.filter(users, function(o) { return !o.active; });
+	 * // => objects for ['fred']
+	 *
+	 * // The `_.matches` iteratee shorthand.
+	 * _.filter(users, { 'age': 36, 'active': true });
+	 * // => objects for ['barney']
+	 *
+	 * // The `_.matchesProperty` iteratee shorthand.
+	 * _.filter(users, ['active', false]);
+	 * // => objects for ['fred']
+	 *
+	 * // The `_.property` iteratee shorthand.
+	 * _.filter(users, 'active');
+	 * // => objects for ['barney']
+	 */
+	function filter(collection, predicate) {
+	  var func = isArray(collection) ? arrayFilter : baseFilter;
+	  return func(collection, baseIteratee(predicate, 3));
+	}
+
+	module.exports = filter;
+
+
+/***/ },
+/* 157 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseEach = __webpack_require__(3);
+
+	/**
+	 * The base implementation of `_.filter` without support for iteratee shorthands.
+	 *
+	 * @private
+	 * @param {Array|Object} collection The collection to iterate over.
+	 * @param {Function} predicate The function invoked per iteration.
+	 * @returns {Array} Returns the new filtered array.
+	 */
+	function baseFilter(collection, predicate) {
+	  var result = [];
+	  baseEach(collection, function(value, index, collection) {
+	    if (predicate(value, index, collection)) {
+	      result.push(value);
+	    }
+	  });
+	  return result;
+	}
+
+	module.exports = baseFilter;
+
+
+/***/ },
+/* 158 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var createFind = __webpack_require__(159),
+	    findIndex = __webpack_require__(160);
+
+	/**
+	 * Iterates over elements of `collection`, returning the first element
+	 * `predicate` returns truthy for. The predicate is invoked with three
+	 * arguments: (value, index|key, collection).
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Collection
+	 * @param {Array|Object} collection The collection to inspect.
+	 * @param {Function} [predicate=_.identity] The function invoked per iteration.
+	 * @param {number} [fromIndex=0] The index to search from.
+	 * @returns {*} Returns the matched element, else `undefined`.
+	 * @example
+	 *
+	 * var users = [
+	 *   { 'user': 'barney',  'age': 36, 'active': true },
+	 *   { 'user': 'fred',    'age': 40, 'active': false },
+	 *   { 'user': 'pebbles', 'age': 1,  'active': true }
+	 * ];
+	 *
+	 * _.find(users, function(o) { return o.age < 40; });
+	 * // => object for 'barney'
+	 *
+	 * // The `_.matches` iteratee shorthand.
+	 * _.find(users, { 'age': 1, 'active': true });
+	 * // => object for 'pebbles'
+	 *
+	 * // The `_.matchesProperty` iteratee shorthand.
+	 * _.find(users, ['active', false]);
+	 * // => object for 'fred'
+	 *
+	 * // The `_.property` iteratee shorthand.
+	 * _.find(users, 'active');
+	 * // => object for 'barney'
+	 */
+	var find = createFind(findIndex);
+
+	module.exports = find;
+
+
+/***/ },
+/* 159 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseIteratee = __webpack_require__(37),
+	    isArrayLike = __webpack_require__(33),
+	    keys = __webpack_require__(7);
+
+	/**
+	 * Creates a `_.find` or `_.findLast` function.
+	 *
+	 * @private
+	 * @param {Function} findIndexFunc The function to find the collection index.
+	 * @returns {Function} Returns the new find function.
+	 */
+	function createFind(findIndexFunc) {
+	  return function(collection, predicate, fromIndex) {
+	    var iterable = Object(collection);
+	    if (!isArrayLike(collection)) {
+	      var iteratee = baseIteratee(predicate, 3);
+	      collection = keys(collection);
+	      predicate = function(key) { return iteratee(iterable[key], key, iterable); };
+	    }
+	    var index = findIndexFunc(collection, predicate, fromIndex);
+	    return index > -1 ? iterable[iteratee ? collection[index] : index] : undefined;
+	  };
+	}
+
+	module.exports = createFind;
+
+
+/***/ },
+/* 160 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseFindIndex = __webpack_require__(161),
+	    baseIteratee = __webpack_require__(37),
+	    toInteger = __webpack_require__(162);
 
 	/* Built-in method references for those with the same name as other `lodash` methods. */
 	var nativeMax = Math.max;
@@ -5091,7 +5599,7 @@ var unflatten =
 
 
 /***/ },
-/* 144 */
+/* 161 */
 /***/ function(module, exports) {
 
 	/**
@@ -5121,10 +5629,10 @@ var unflatten =
 
 
 /***/ },
-/* 145 */
+/* 162 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var toFinite = __webpack_require__(146);
+	var toFinite = __webpack_require__(163);
 
 	/**
 	 * Converts `value` to an integer.
@@ -5163,10 +5671,10 @@ var unflatten =
 
 
 /***/ },
-/* 146 */
+/* 163 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var toNumber = __webpack_require__(147);
+	var toNumber = __webpack_require__(164);
 
 	/** Used as references for various `Number` constants. */
 	var INFINITY = 1 / 0,
@@ -5211,7 +5719,7 @@ var unflatten =
 
 
 /***/ },
-/* 147 */
+/* 164 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var isObject = __webpack_require__(35),
@@ -5283,1109 +5791,12 @@ var unflatten =
 
 
 /***/ },
-/* 148 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseToString = __webpack_require__(113),
-	    castSlice = __webpack_require__(149),
-	    charsEndIndex = __webpack_require__(151),
-	    charsStartIndex = __webpack_require__(155),
-	    stringToArray = __webpack_require__(156),
-	    toString = __webpack_require__(112);
-
-	/** Used to match leading and trailing whitespace. */
-	var reTrim = /^\s+|\s+$/g;
-
-	/**
-	 * Removes leading and trailing whitespace or specified characters from `string`.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 3.0.0
-	 * @category String
-	 * @param {string} [string=''] The string to trim.
-	 * @param {string} [chars=whitespace] The characters to trim.
-	 * @param- {Object} [guard] Enables use as an iteratee for methods like `_.map`.
-	 * @returns {string} Returns the trimmed string.
-	 * @example
-	 *
-	 * _.trim('  abc  ');
-	 * // => 'abc'
-	 *
-	 * _.trim('-_-abc-_-', '_-');
-	 * // => 'abc'
-	 *
-	 * _.map(['  foo  ', '  bar  '], _.trim);
-	 * // => ['foo', 'bar']
-	 */
-	function trim(string, chars, guard) {
-	  string = toString(string);
-	  if (string && (guard || chars === undefined)) {
-	    return string.replace(reTrim, '');
-	  }
-	  if (!string || !(chars = baseToString(chars))) {
-	    return string;
-	  }
-	  var strSymbols = stringToArray(string),
-	      chrSymbols = stringToArray(chars),
-	      start = charsStartIndex(strSymbols, chrSymbols),
-	      end = charsEndIndex(strSymbols, chrSymbols) + 1;
-
-	  return castSlice(strSymbols, start, end).join('');
-	}
-
-	module.exports = trim;
-
-
-/***/ },
-/* 149 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseSlice = __webpack_require__(150);
-
-	/**
-	 * Casts `array` to a slice if it's needed.
-	 *
-	 * @private
-	 * @param {Array} array The array to inspect.
-	 * @param {number} start The start position.
-	 * @param {number} [end=array.length] The end position.
-	 * @returns {Array} Returns the cast slice.
-	 */
-	function castSlice(array, start, end) {
-	  var length = array.length;
-	  end = end === undefined ? length : end;
-	  return (!start && end >= length) ? array : baseSlice(array, start, end);
-	}
-
-	module.exports = castSlice;
-
-
-/***/ },
-/* 150 */
-/***/ function(module, exports) {
-
-	/**
-	 * The base implementation of `_.slice` without an iteratee call guard.
-	 *
-	 * @private
-	 * @param {Array} array The array to slice.
-	 * @param {number} [start=0] The start position.
-	 * @param {number} [end=array.length] The end position.
-	 * @returns {Array} Returns the slice of `array`.
-	 */
-	function baseSlice(array, start, end) {
-	  var index = -1,
-	      length = array.length;
-
-	  if (start < 0) {
-	    start = -start > length ? 0 : (length + start);
-	  }
-	  end = end > length ? length : end;
-	  if (end < 0) {
-	    end += length;
-	  }
-	  length = start > end ? 0 : ((end - start) >>> 0);
-	  start >>>= 0;
-
-	  var result = Array(length);
-	  while (++index < length) {
-	    result[index] = array[index + start];
-	  }
-	  return result;
-	}
-
-	module.exports = baseSlice;
-
-
-/***/ },
-/* 151 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseIndexOf = __webpack_require__(152);
-
-	/**
-	 * Used by `_.trim` and `_.trimEnd` to get the index of the last string symbol
-	 * that is not found in the character symbols.
-	 *
-	 * @private
-	 * @param {Array} strSymbols The string symbols to inspect.
-	 * @param {Array} chrSymbols The character symbols to find.
-	 * @returns {number} Returns the index of the last unmatched string symbol.
-	 */
-	function charsEndIndex(strSymbols, chrSymbols) {
-	  var index = strSymbols.length;
-
-	  while (index-- && baseIndexOf(chrSymbols, strSymbols[index], 0) > -1) {}
-	  return index;
-	}
-
-	module.exports = charsEndIndex;
-
-
-/***/ },
-/* 152 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseFindIndex = __webpack_require__(144),
-	    baseIsNaN = __webpack_require__(153),
-	    strictIndexOf = __webpack_require__(154);
-
-	/**
-	 * The base implementation of `_.indexOf` without `fromIndex` bounds checks.
-	 *
-	 * @private
-	 * @param {Array} array The array to inspect.
-	 * @param {*} value The value to search for.
-	 * @param {number} fromIndex The index to search from.
-	 * @returns {number} Returns the index of the matched value, else `-1`.
-	 */
-	function baseIndexOf(array, value, fromIndex) {
-	  return value === value
-	    ? strictIndexOf(array, value, fromIndex)
-	    : baseFindIndex(array, baseIsNaN, fromIndex);
-	}
-
-	module.exports = baseIndexOf;
-
-
-/***/ },
-/* 153 */
-/***/ function(module, exports) {
-
-	/**
-	 * The base implementation of `_.isNaN` without support for number objects.
-	 *
-	 * @private
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is `NaN`, else `false`.
-	 */
-	function baseIsNaN(value) {
-	  return value !== value;
-	}
-
-	module.exports = baseIsNaN;
-
-
-/***/ },
-/* 154 */
-/***/ function(module, exports) {
-
-	/**
-	 * A specialized version of `_.indexOf` which performs strict equality
-	 * comparisons of values, i.e. `===`.
-	 *
-	 * @private
-	 * @param {Array} array The array to inspect.
-	 * @param {*} value The value to search for.
-	 * @param {number} fromIndex The index to search from.
-	 * @returns {number} Returns the index of the matched value, else `-1`.
-	 */
-	function strictIndexOf(array, value, fromIndex) {
-	  var index = fromIndex - 1,
-	      length = array.length;
-
-	  while (++index < length) {
-	    if (array[index] === value) {
-	      return index;
-	    }
-	  }
-	  return -1;
-	}
-
-	module.exports = strictIndexOf;
-
-
-/***/ },
-/* 155 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseIndexOf = __webpack_require__(152);
-
-	/**
-	 * Used by `_.trim` and `_.trimStart` to get the index of the first string symbol
-	 * that is not found in the character symbols.
-	 *
-	 * @private
-	 * @param {Array} strSymbols The string symbols to inspect.
-	 * @param {Array} chrSymbols The character symbols to find.
-	 * @returns {number} Returns the index of the first unmatched string symbol.
-	 */
-	function charsStartIndex(strSymbols, chrSymbols) {
-	  var index = -1,
-	      length = strSymbols.length;
-
-	  while (++index < length && baseIndexOf(chrSymbols, strSymbols[index], 0) > -1) {}
-	  return index;
-	}
-
-	module.exports = charsStartIndex;
-
-
-/***/ },
-/* 156 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var asciiToArray = __webpack_require__(157),
-	    hasUnicode = __webpack_require__(158),
-	    unicodeToArray = __webpack_require__(159);
-
-	/**
-	 * Converts `string` to an array.
-	 *
-	 * @private
-	 * @param {string} string The string to convert.
-	 * @returns {Array} Returns the converted array.
-	 */
-	function stringToArray(string) {
-	  return hasUnicode(string)
-	    ? unicodeToArray(string)
-	    : asciiToArray(string);
-	}
-
-	module.exports = stringToArray;
-
-
-/***/ },
-/* 157 */
-/***/ function(module, exports) {
-
-	/**
-	 * Converts an ASCII `string` to an array.
-	 *
-	 * @private
-	 * @param {string} string The string to convert.
-	 * @returns {Array} Returns the converted array.
-	 */
-	function asciiToArray(string) {
-	  return string.split('');
-	}
-
-	module.exports = asciiToArray;
-
-
-/***/ },
-/* 158 */
-/***/ function(module, exports) {
-
-	/** Used to compose unicode character classes. */
-	var rsAstralRange = '\\ud800-\\udfff',
-	    rsComboMarksRange = '\\u0300-\\u036f',
-	    reComboHalfMarksRange = '\\ufe20-\\ufe2f',
-	    rsComboSymbolsRange = '\\u20d0-\\u20ff',
-	    rsComboRange = rsComboMarksRange + reComboHalfMarksRange + rsComboSymbolsRange,
-	    rsVarRange = '\\ufe0e\\ufe0f';
-
-	/** Used to compose unicode capture groups. */
-	var rsZWJ = '\\u200d';
-
-	/** Used to detect strings with [zero-width joiners or code points from the astral planes](http://eev.ee/blog/2015/09/12/dark-corners-of-unicode/). */
-	var reHasUnicode = RegExp('[' + rsZWJ + rsAstralRange  + rsComboRange + rsVarRange + ']');
-
-	/**
-	 * Checks if `string` contains Unicode symbols.
-	 *
-	 * @private
-	 * @param {string} string The string to inspect.
-	 * @returns {boolean} Returns `true` if a symbol is found, else `false`.
-	 */
-	function hasUnicode(string) {
-	  return reHasUnicode.test(string);
-	}
-
-	module.exports = hasUnicode;
-
-
-/***/ },
-/* 159 */
-/***/ function(module, exports) {
-
-	/** Used to compose unicode character classes. */
-	var rsAstralRange = '\\ud800-\\udfff',
-	    rsComboMarksRange = '\\u0300-\\u036f',
-	    reComboHalfMarksRange = '\\ufe20-\\ufe2f',
-	    rsComboSymbolsRange = '\\u20d0-\\u20ff',
-	    rsComboRange = rsComboMarksRange + reComboHalfMarksRange + rsComboSymbolsRange,
-	    rsVarRange = '\\ufe0e\\ufe0f';
-
-	/** Used to compose unicode capture groups. */
-	var rsAstral = '[' + rsAstralRange + ']',
-	    rsCombo = '[' + rsComboRange + ']',
-	    rsFitz = '\\ud83c[\\udffb-\\udfff]',
-	    rsModifier = '(?:' + rsCombo + '|' + rsFitz + ')',
-	    rsNonAstral = '[^' + rsAstralRange + ']',
-	    rsRegional = '(?:\\ud83c[\\udde6-\\uddff]){2}',
-	    rsSurrPair = '[\\ud800-\\udbff][\\udc00-\\udfff]',
-	    rsZWJ = '\\u200d';
-
-	/** Used to compose unicode regexes. */
-	var reOptMod = rsModifier + '?',
-	    rsOptVar = '[' + rsVarRange + ']?',
-	    rsOptJoin = '(?:' + rsZWJ + '(?:' + [rsNonAstral, rsRegional, rsSurrPair].join('|') + ')' + rsOptVar + reOptMod + ')*',
-	    rsSeq = rsOptVar + reOptMod + rsOptJoin,
-	    rsSymbol = '(?:' + [rsNonAstral + rsCombo + '?', rsCombo, rsRegional, rsSurrPair, rsAstral].join('|') + ')';
-
-	/** Used to match [string symbols](https://mathiasbynens.be/notes/javascript-unicode). */
-	var reUnicode = RegExp(rsFitz + '(?=' + rsFitz + ')|' + rsSymbol + rsSeq, 'g');
-
-	/**
-	 * Converts a Unicode `string` to an array.
-	 *
-	 * @private
-	 * @param {string} string The string to convert.
-	 * @returns {Array} Returns the converted array.
-	 */
-	function unicodeToArray(string) {
-	  return string.match(reUnicode) || [];
-	}
-
-	module.exports = unicodeToArray;
-
-
-/***/ },
-/* 160 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseToString = __webpack_require__(113),
-	    castSlice = __webpack_require__(149),
-	    hasUnicode = __webpack_require__(158),
-	    isIterateeCall = __webpack_require__(140),
-	    isRegExp = __webpack_require__(161),
-	    stringToArray = __webpack_require__(156),
-	    toString = __webpack_require__(112);
-
-	/** Used as references for the maximum length and index of an array. */
-	var MAX_ARRAY_LENGTH = 4294967295;
-
-	/**
-	 * Splits `string` by `separator`.
-	 *
-	 * **Note:** This method is based on
-	 * [`String#split`](https://mdn.io/String/split).
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.0.0
-	 * @category String
-	 * @param {string} [string=''] The string to split.
-	 * @param {RegExp|string} separator The separator pattern to split by.
-	 * @param {number} [limit] The length to truncate results to.
-	 * @returns {Array} Returns the string segments.
-	 * @example
-	 *
-	 * _.split('a-b-c', '-', 2);
-	 * // => ['a', 'b']
-	 */
-	function split(string, separator, limit) {
-	  if (limit && typeof limit != 'number' && isIterateeCall(string, separator, limit)) {
-	    separator = limit = undefined;
-	  }
-	  limit = limit === undefined ? MAX_ARRAY_LENGTH : limit >>> 0;
-	  if (!limit) {
-	    return [];
-	  }
-	  string = toString(string);
-	  if (string && (
-	        typeof separator == 'string' ||
-	        (separator != null && !isRegExp(separator))
-	      )) {
-	    separator = baseToString(separator);
-	    if (!separator && hasUnicode(string)) {
-	      return castSlice(stringToArray(string), 0, limit);
-	    }
-	  }
-	  return string.split(separator, limit);
-	}
-
-	module.exports = split;
-
-
-/***/ },
-/* 161 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseIsRegExp = __webpack_require__(162),
-	    baseUnary = __webpack_require__(27),
-	    nodeUtil = __webpack_require__(28);
-
-	/* Node.js helper references. */
-	var nodeIsRegExp = nodeUtil && nodeUtil.isRegExp;
-
-	/**
-	 * Checks if `value` is classified as a `RegExp` object.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 0.1.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is a regexp, else `false`.
-	 * @example
-	 *
-	 * _.isRegExp(/abc/);
-	 * // => true
-	 *
-	 * _.isRegExp('/abc/');
-	 * // => false
-	 */
-	var isRegExp = nodeIsRegExp ? baseUnary(nodeIsRegExp) : baseIsRegExp;
-
-	module.exports = isRegExp;
-
-
-/***/ },
-/* 162 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseGetTag = __webpack_require__(12),
-	    isObjectLike = __webpack_require__(18);
-
-	/** `Object#toString` result references. */
-	var regexpTag = '[object RegExp]';
-
-	/**
-	 * The base implementation of `_.isRegExp` without Node.js optimizations.
-	 *
-	 * @private
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is a regexp, else `false`.
-	 */
-	function baseIsRegExp(value) {
-	  return isObjectLike(value) && baseGetTag(value) == regexpTag;
-	}
-
-	module.exports = baseIsRegExp;
-
-
-/***/ },
-/* 163 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseGetTag = __webpack_require__(12),
-	    isArray = __webpack_require__(19),
-	    isObjectLike = __webpack_require__(18);
-
-	/** `Object#toString` result references. */
-	var stringTag = '[object String]';
-
-	/**
-	 * Checks if `value` is classified as a `String` primitive or object.
-	 *
-	 * @static
-	 * @since 0.1.0
-	 * @memberOf _
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is a string, else `false`.
-	 * @example
-	 *
-	 * _.isString('abc');
-	 * // => true
-	 *
-	 * _.isString(1);
-	 * // => false
-	 */
-	function isString(value) {
-	  return typeof value == 'string' ||
-	    (!isArray(value) && isObjectLike(value) && baseGetTag(value) == stringTag);
-	}
-
-	module.exports = isString;
-
-
-/***/ },
-/* 164 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var arrayPush = __webpack_require__(91),
-	    baseFlatten = __webpack_require__(125),
-	    copyArray = __webpack_require__(165),
-	    isArray = __webpack_require__(19);
-
-	/**
-	 * Creates a new array concatenating `array` with any additional arrays
-	 * and/or values.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.0.0
-	 * @category Array
-	 * @param {Array} array The array to concatenate.
-	 * @param {...*} [values] The values to concatenate.
-	 * @returns {Array} Returns the new concatenated array.
-	 * @example
-	 *
-	 * var array = [1];
-	 * var other = _.concat(array, 2, [3], [[4]]);
-	 *
-	 * console.log(other);
-	 * // => [1, 2, 3, [4]]
-	 *
-	 * console.log(array);
-	 * // => [1]
-	 */
-	function concat() {
-	  var length = arguments.length;
-	  if (!length) {
-	    return [];
-	  }
-	  var args = Array(length - 1),
-	      array = arguments[0],
-	      index = length;
-
-	  while (index--) {
-	    args[index - 1] = arguments[index];
-	  }
-	  return arrayPush(isArray(array) ? copyArray(array) : [array], baseFlatten(args, 1));
-	}
-
-	module.exports = concat;
-
-
-/***/ },
 /* 165 */
-/***/ function(module, exports) {
-
-	/**
-	 * Copies the values of `source` to `array`.
-	 *
-	 * @private
-	 * @param {Array} source The array to copy values from.
-	 * @param {Array} [array=[]] The array to copy values to.
-	 * @returns {Array} Returns `array`.
-	 */
-	function copyArray(source, array) {
-	  var index = -1,
-	      length = source.length;
-
-	  array || (array = Array(length));
-	  while (++index < length) {
-	    array[index] = source[index];
-	  }
-	  return array;
-	}
-
-	module.exports = copyArray;
-
-
-/***/ },
-/* 166 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var arrayMap = __webpack_require__(114),
-	    baseIteratee = __webpack_require__(37),
-	    baseMap = __webpack_require__(128),
-	    isArray = __webpack_require__(19);
-
-	/**
-	 * Creates an array of values by running each element in `collection` thru
-	 * `iteratee`. The iteratee is invoked with three arguments:
-	 * (value, index|key, collection).
-	 *
-	 * Many lodash methods are guarded to work as iteratees for methods like
-	 * `_.every`, `_.filter`, `_.map`, `_.mapValues`, `_.reject`, and `_.some`.
-	 *
-	 * The guarded methods are:
-	 * `ary`, `chunk`, `curry`, `curryRight`, `drop`, `dropRight`, `every`,
-	 * `fill`, `invert`, `parseInt`, `random`, `range`, `rangeRight`, `repeat`,
-	 * `sampleSize`, `slice`, `some`, `sortBy`, `split`, `take`, `takeRight`,
-	 * `template`, `trim`, `trimEnd`, `trimStart`, and `words`
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 0.1.0
-	 * @category Collection
-	 * @param {Array|Object} collection The collection to iterate over.
-	 * @param {Function} [iteratee=_.identity] The function invoked per iteration.
-	 * @returns {Array} Returns the new mapped array.
-	 * @example
-	 *
-	 * function square(n) {
-	 *   return n * n;
-	 * }
-	 *
-	 * _.map([4, 8], square);
-	 * // => [16, 64]
-	 *
-	 * _.map({ 'a': 4, 'b': 8 }, square);
-	 * // => [16, 64] (iteration order is not guaranteed)
-	 *
-	 * var users = [
-	 *   { 'user': 'barney' },
-	 *   { 'user': 'fred' }
-	 * ];
-	 *
-	 * // The `_.property` iteratee shorthand.
-	 * _.map(users, 'user');
-	 * // => ['barney', 'fred']
-	 */
-	function map(collection, iteratee) {
-	  var func = isArray(collection) ? arrayMap : baseMap;
-	  return func(collection, baseIteratee(iteratee, 3));
-	}
-
-	module.exports = map;
-
-
-/***/ },
-/* 167 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseAssignValue = __webpack_require__(168),
-	    createAggregator = __webpack_require__(169);
-
-	/** Used for built-in method references. */
-	var objectProto = Object.prototype;
-
-	/** Used to check objects for own properties. */
-	var hasOwnProperty = objectProto.hasOwnProperty;
-
-	/**
-	 * Creates an object composed of keys generated from the results of running
-	 * each element of `collection` thru `iteratee`. The order of grouped values
-	 * is determined by the order they occur in `collection`. The corresponding
-	 * value of each key is an array of elements responsible for generating the
-	 * key. The iteratee is invoked with one argument: (value).
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 0.1.0
-	 * @category Collection
-	 * @param {Array|Object} collection The collection to iterate over.
-	 * @param {Function} [iteratee=_.identity] The iteratee to transform keys.
-	 * @returns {Object} Returns the composed aggregate object.
-	 * @example
-	 *
-	 * _.groupBy([6.1, 4.2, 6.3], Math.floor);
-	 * // => { '4': [4.2], '6': [6.1, 6.3] }
-	 *
-	 * // The `_.property` iteratee shorthand.
-	 * _.groupBy(['one', 'two', 'three'], 'length');
-	 * // => { '3': ['one', 'two'], '5': ['three'] }
-	 */
-	var groupBy = createAggregator(function(result, value, key) {
-	  if (hasOwnProperty.call(result, key)) {
-	    result[key].push(value);
-	  } else {
-	    baseAssignValue(result, key, [value]);
-	  }
-	});
-
-	module.exports = groupBy;
-
-
-/***/ },
-/* 168 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var defineProperty = __webpack_require__(138);
-
-	/**
-	 * The base implementation of `assignValue` and `assignMergeValue` without
-	 * value checks.
-	 *
-	 * @private
-	 * @param {Object} object The object to modify.
-	 * @param {string} key The key of the property to assign.
-	 * @param {*} value The value to assign.
-	 */
-	function baseAssignValue(object, key, value) {
-	  if (key == '__proto__' && defineProperty) {
-	    defineProperty(object, key, {
-	      'configurable': true,
-	      'enumerable': true,
-	      'value': value,
-	      'writable': true
-	    });
-	  } else {
-	    object[key] = value;
-	  }
-	}
-
-	module.exports = baseAssignValue;
-
-
-/***/ },
-/* 169 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var arrayAggregator = __webpack_require__(170),
-	    baseAggregator = __webpack_require__(171),
-	    baseIteratee = __webpack_require__(37),
-	    isArray = __webpack_require__(19);
-
-	/**
-	 * Creates a function like `_.groupBy`.
-	 *
-	 * @private
-	 * @param {Function} setter The function to set accumulator values.
-	 * @param {Function} [initializer] The accumulator object initializer.
-	 * @returns {Function} Returns the new aggregator function.
-	 */
-	function createAggregator(setter, initializer) {
-	  return function(collection, iteratee) {
-	    var func = isArray(collection) ? arrayAggregator : baseAggregator,
-	        accumulator = initializer ? initializer() : {};
-
-	    return func(collection, setter, baseIteratee(iteratee, 2), accumulator);
-	  };
-	}
-
-	module.exports = createAggregator;
-
-
-/***/ },
-/* 170 */
-/***/ function(module, exports) {
-
-	/**
-	 * A specialized version of `baseAggregator` for arrays.
-	 *
-	 * @private
-	 * @param {Array} [array] The array to iterate over.
-	 * @param {Function} setter The function to set `accumulator` values.
-	 * @param {Function} iteratee The iteratee to transform keys.
-	 * @param {Object} accumulator The initial aggregated object.
-	 * @returns {Function} Returns `accumulator`.
-	 */
-	function arrayAggregator(array, setter, iteratee, accumulator) {
-	  var index = -1,
-	      length = array == null ? 0 : array.length;
-
-	  while (++index < length) {
-	    var value = array[index];
-	    setter(accumulator, value, iteratee(value), array);
-	  }
-	  return accumulator;
-	}
-
-	module.exports = arrayAggregator;
-
-
-/***/ },
-/* 171 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseEach = __webpack_require__(3);
-
-	/**
-	 * Aggregates elements of `collection` on `accumulator` with keys transformed
-	 * by `iteratee` and values set by `setter`.
-	 *
-	 * @private
-	 * @param {Array|Object} collection The collection to iterate over.
-	 * @param {Function} setter The function to set `accumulator` values.
-	 * @param {Function} iteratee The iteratee to transform keys.
-	 * @param {Object} accumulator The initial aggregated object.
-	 * @returns {Function} Returns `accumulator`.
-	 */
-	function baseAggregator(collection, setter, iteratee, accumulator) {
-	  baseEach(collection, function(value, key, collection) {
-	    setter(accumulator, value, iteratee(value), collection);
-	  });
-	  return accumulator;
-	}
-
-	module.exports = baseAggregator;
-
-
-/***/ },
-/* 172 */
-/***/ function(module, exports) {
-
-	/**
-	 * Checks if `value` is `undefined`.
-	 *
-	 * @static
-	 * @since 0.1.0
-	 * @memberOf _
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is `undefined`, else `false`.
-	 * @example
-	 *
-	 * _.isUndefined(void 0);
-	 * // => true
-	 *
-	 * _.isUndefined(null);
-	 * // => false
-	 */
-	function isUndefined(value) {
-	  return value === undefined;
-	}
-
-	module.exports = isUndefined;
-
-
-/***/ },
-/* 173 */
-/***/ function(module, exports, __webpack_require__) {
-
-	module.exports = __webpack_require__(174);
-
-
-/***/ },
-/* 174 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var arrayEach = __webpack_require__(175),
-	    baseEach = __webpack_require__(3),
-	    castFunction = __webpack_require__(176),
-	    isArray = __webpack_require__(19);
-
-	/**
-	 * Iterates over elements of `collection` and invokes `iteratee` for each element.
-	 * The iteratee is invoked with three arguments: (value, index|key, collection).
-	 * Iteratee functions may exit iteration early by explicitly returning `false`.
-	 *
-	 * **Note:** As with other "Collections" methods, objects with a "length"
-	 * property are iterated like arrays. To avoid this behavior use `_.forIn`
-	 * or `_.forOwn` for object iteration.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 0.1.0
-	 * @alias each
-	 * @category Collection
-	 * @param {Array|Object} collection The collection to iterate over.
-	 * @param {Function} [iteratee=_.identity] The function invoked per iteration.
-	 * @returns {Array|Object} Returns `collection`.
-	 * @see _.forEachRight
-	 * @example
-	 *
-	 * _.forEach([1, 2], function(value) {
-	 *   console.log(value);
-	 * });
-	 * // => Logs `1` then `2`.
-	 *
-	 * _.forEach({ 'a': 1, 'b': 2 }, function(value, key) {
-	 *   console.log(key);
-	 * });
-	 * // => Logs 'a' then 'b' (iteration order is not guaranteed).
-	 */
-	function forEach(collection, iteratee) {
-	  var func = isArray(collection) ? arrayEach : baseEach;
-	  return func(collection, castFunction(iteratee));
-	}
-
-	module.exports = forEach;
-
-
-/***/ },
-/* 175 */
-/***/ function(module, exports) {
-
-	/**
-	 * A specialized version of `_.forEach` for arrays without support for
-	 * iteratee shorthands.
-	 *
-	 * @private
-	 * @param {Array} [array] The array to iterate over.
-	 * @param {Function} iteratee The function invoked per iteration.
-	 * @returns {Array} Returns `array`.
-	 */
-	function arrayEach(array, iteratee) {
-	  var index = -1,
-	      length = array == null ? 0 : array.length;
-
-	  while (++index < length) {
-	    if (iteratee(array[index], index, array) === false) {
-	      break;
-	    }
-	  }
-	  return array;
-	}
-
-	module.exports = arrayEach;
-
-
-/***/ },
-/* 176 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var identity = __webpack_require__(119);
-
-	/**
-	 * Casts `value` to `identity` if it's not a function.
-	 *
-	 * @private
-	 * @param {*} value The value to inspect.
-	 * @returns {Function} Returns cast function.
-	 */
-	function castFunction(value) {
-	  return typeof value == 'function' ? value : identity;
-	}
-
-	module.exports = castFunction;
-
-
-/***/ },
-/* 177 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var arrayFilter = __webpack_require__(93),
-	    baseFilter = __webpack_require__(178),
-	    baseIteratee = __webpack_require__(37),
-	    isArray = __webpack_require__(19);
-
-	/**
-	 * Iterates over elements of `collection`, returning an array of all elements
-	 * `predicate` returns truthy for. The predicate is invoked with three
-	 * arguments: (value, index|key, collection).
-	 *
-	 * **Note:** Unlike `_.remove`, this method returns a new array.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 0.1.0
-	 * @category Collection
-	 * @param {Array|Object} collection The collection to iterate over.
-	 * @param {Function} [predicate=_.identity] The function invoked per iteration.
-	 * @returns {Array} Returns the new filtered array.
-	 * @see _.reject
-	 * @example
-	 *
-	 * var users = [
-	 *   { 'user': 'barney', 'age': 36, 'active': true },
-	 *   { 'user': 'fred',   'age': 40, 'active': false }
-	 * ];
-	 *
-	 * _.filter(users, function(o) { return !o.active; });
-	 * // => objects for ['fred']
-	 *
-	 * // The `_.matches` iteratee shorthand.
-	 * _.filter(users, { 'age': 36, 'active': true });
-	 * // => objects for ['barney']
-	 *
-	 * // The `_.matchesProperty` iteratee shorthand.
-	 * _.filter(users, ['active', false]);
-	 * // => objects for ['fred']
-	 *
-	 * // The `_.property` iteratee shorthand.
-	 * _.filter(users, 'active');
-	 * // => objects for ['barney']
-	 */
-	function filter(collection, predicate) {
-	  var func = isArray(collection) ? arrayFilter : baseFilter;
-	  return func(collection, baseIteratee(predicate, 3));
-	}
-
-	module.exports = filter;
-
-
-/***/ },
-/* 178 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseEach = __webpack_require__(3);
-
-	/**
-	 * The base implementation of `_.filter` without support for iteratee shorthands.
-	 *
-	 * @private
-	 * @param {Array|Object} collection The collection to iterate over.
-	 * @param {Function} predicate The function invoked per iteration.
-	 * @returns {Array} Returns the new filtered array.
-	 */
-	function baseFilter(collection, predicate) {
-	  var result = [];
-	  baseEach(collection, function(value, index, collection) {
-	    if (predicate(value, index, collection)) {
-	      result.push(value);
-	    }
-	  });
-	  return result;
-	}
-
-	module.exports = baseFilter;
-
-
-/***/ },
-/* 179 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var createFind = __webpack_require__(180),
-	    findIndex = __webpack_require__(143);
-
-	/**
-	 * Iterates over elements of `collection`, returning the first element
-	 * `predicate` returns truthy for. The predicate is invoked with three
-	 * arguments: (value, index|key, collection).
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 0.1.0
-	 * @category Collection
-	 * @param {Array|Object} collection The collection to inspect.
-	 * @param {Function} [predicate=_.identity] The function invoked per iteration.
-	 * @param {number} [fromIndex=0] The index to search from.
-	 * @returns {*} Returns the matched element, else `undefined`.
-	 * @example
-	 *
-	 * var users = [
-	 *   { 'user': 'barney',  'age': 36, 'active': true },
-	 *   { 'user': 'fred',    'age': 40, 'active': false },
-	 *   { 'user': 'pebbles', 'age': 1,  'active': true }
-	 * ];
-	 *
-	 * _.find(users, function(o) { return o.age < 40; });
-	 * // => object for 'barney'
-	 *
-	 * // The `_.matches` iteratee shorthand.
-	 * _.find(users, { 'age': 1, 'active': true });
-	 * // => object for 'pebbles'
-	 *
-	 * // The `_.matchesProperty` iteratee shorthand.
-	 * _.find(users, ['active', false]);
-	 * // => object for 'fred'
-	 *
-	 * // The `_.property` iteratee shorthand.
-	 * _.find(users, 'active');
-	 * // => object for 'barney'
-	 */
-	var find = createFind(findIndex);
-
-	module.exports = find;
-
-
-/***/ },
-/* 180 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseIteratee = __webpack_require__(37),
-	    isArrayLike = __webpack_require__(33),
-	    keys = __webpack_require__(7);
-
-	/**
-	 * Creates a `_.find` or `_.findLast` function.
-	 *
-	 * @private
-	 * @param {Function} findIndexFunc The function to find the collection index.
-	 * @returns {Function} Returns the new find function.
-	 */
-	function createFind(findIndexFunc) {
-	  return function(collection, predicate, fromIndex) {
-	    var iterable = Object(collection);
-	    if (!isArrayLike(collection)) {
-	      var iteratee = baseIteratee(predicate, 3);
-	      collection = keys(collection);
-	      predicate = function(key) { return iteratee(iterable[key], key, iterable); };
-	    }
-	    var index = findIndexFunc(collection, predicate, fromIndex);
-	    return index > -1 ? iterable[iteratee ? collection[index] : index] : undefined;
-	  };
-	}
-
-	module.exports = createFind;
-
-
-/***/ },
-/* 181 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var assignValue = __webpack_require__(182),
-	    copyObject = __webpack_require__(183),
-	    createAssigner = __webpack_require__(184),
+	var assignValue = __webpack_require__(166),
+	    copyObject = __webpack_require__(167),
+	    createAssigner = __webpack_require__(168),
 	    isArrayLike = __webpack_require__(33),
 	    isPrototype = __webpack_require__(30),
 	    keys = __webpack_require__(7);
@@ -6444,10 +5855,10 @@ var unflatten =
 
 
 /***/ },
-/* 182 */
+/* 166 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseAssignValue = __webpack_require__(168),
+	var baseAssignValue = __webpack_require__(147),
 	    eq = __webpack_require__(45);
 
 	/** Used for built-in method references. */
@@ -6478,11 +5889,11 @@ var unflatten =
 
 
 /***/ },
-/* 183 */
+/* 167 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var assignValue = __webpack_require__(182),
-	    baseAssignValue = __webpack_require__(168);
+	var assignValue = __webpack_require__(166),
+	    baseAssignValue = __webpack_require__(147);
 
 	/**
 	 * Copies properties of `source` to `object`.
@@ -6524,7 +5935,7 @@ var unflatten =
 
 
 /***/ },
-/* 184 */
+/* 168 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var baseRest = __webpack_require__(132),
@@ -6564,6 +5975,118 @@ var unflatten =
 	}
 
 	module.exports = createAssigner;
+
+
+/***/ },
+/* 169 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*!
+	 * sort-order-by <https://github.com/domovoj/sort-order-by
+	 *
+	 * Copyright (c) 2017, Yura Levantovych.
+	 * Licensed under the MIT License.
+	 */
+
+	'use strict';
+
+	var sortOrderBy = __webpack_require__(170);
+
+	module.exports = sortOrderBy;
+
+
+/***/ },
+/* 170 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var _findIndex2 = __webpack_require__(160);
+
+	var _findIndex3 = _interopRequireDefault(_findIndex2);
+
+	var _find2 = __webpack_require__(158);
+
+	var _find3 = _interopRequireDefault(_find2);
+
+	var _each2 = __webpack_require__(152);
+
+	var _each3 = _interopRequireDefault(_each2);
+
+	var _isArray2 = __webpack_require__(19);
+
+	var _isArray3 = _interopRequireDefault(_isArray2);
+
+	var _concat2 = __webpack_require__(143);
+
+	var _concat3 = _interopRequireDefault(_concat2);
+
+	var _isFunction2 = __webpack_require__(34);
+
+	var _isFunction3 = _interopRequireDefault(_isFunction2);
+
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var customSort = function customSort(items, sortBy) {
+	    var res = [];
+	    for (var i = 0; i < sortBy.length; i++) {
+	        var sortObject = sortBy[i];
+
+	        var _loop = function _loop(key) {
+	            if (!sortObject.hasOwnProperty(key)) {
+	                return 'continue';
+	            }
+	            var tempArr = [];
+	            // custom sort entity
+	            var sortItem = sortObject[key];
+
+	            // if not string breaks next steps
+	            if ((0, _isFunction3.default)(sortItem)) {
+	                var resultCallback = sortItem(items, key);
+
+	                return {
+	                    v: (0, _concat3.default)(res, resultCallback)
+	                };
+	            }
+	            // sorts by splitted string (clears items) for next steps "custom sort"
+	            if ((0, _isArray3.default)(sortItem)) {
+	                (0, _each3.default)(sortItem, function (value) {
+	                    var findObject = {};
+
+	                    findObject[key] = value;
+	                    var finded = (0, _find3.default)(items, findObject);
+
+	                    if (finded) {
+	                        tempArr.push(finded);
+
+	                        // remove just added item for accelerating next steps
+	                        items.splice((0, _findIndex3.default)(items, findObject), 1);
+	                    }
+	                });
+
+	                res = (0, _concat3.default)(res, tempArr);
+	            }
+	        };
+
+	        for (var key in sortObject) {
+	            var _ret = _loop(key);
+
+	            switch (_ret) {
+	                case 'continue':
+	                    continue;
+
+	                default:
+	                    if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
+	            }
+	        }
+	    }
+	    // prepends items which left after "custom sort"
+	    return (0, _concat3.default)(res, items);
+	};
+
+	module.exports = customSort;
 
 
 /***/ }

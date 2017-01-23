@@ -16,26 +16,6 @@ var _isArray2 = require('lodash/isArray');
 
 var _isArray3 = _interopRequireDefault(_isArray2);
 
-var _findIndex2 = require('lodash/findIndex');
-
-var _findIndex3 = _interopRequireDefault(_findIndex2);
-
-var _trim2 = require('lodash/trim');
-
-var _trim3 = _interopRequireDefault(_trim2);
-
-var _split2 = require('lodash/split');
-
-var _split3 = _interopRequireDefault(_split2);
-
-var _isString2 = require('lodash/isString');
-
-var _isString3 = _interopRequireDefault(_isString2);
-
-var _isFunction2 = require('lodash/isFunction');
-
-var _isFunction3 = _interopRequireDefault(_isFunction2);
-
 var _concat2 = require('lodash/concat');
 
 var _concat3 = _interopRequireDefault(_concat2);
@@ -68,9 +48,11 @@ var _assign2 = require('lodash/assign');
 
 var _assign3 = _interopRequireDefault(_assign2);
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _sortOrderBy = require('sort-order-by');
+
+var _sortOrderBy2 = _interopRequireDefault(_sortOrderBy);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -149,12 +131,13 @@ var Unflat = function () {
         value: function setEntity(arr, current) {
             var tempArr = [];
 
-            (0, _each3.default)((0, _groupBy3.default)(arr, current.id), function (items, childKey) {
+            (0, _each3.default)((0, _groupBy3.default)(arr, current.id), function (items) {
                 var entity = {};
-
-                entity[current.id] = childKey;
-
                 var firstItem = items[0];
+
+                // get id from first item because _.each converts key to string
+                entity[current.id] = firstItem[current.id];
+
                 (0, _each3.default)(current.props, function (prop) {
                     // get value for prop from first item in array - use only common props for entity
                     entity[prop] = firstItem[prop];
@@ -269,72 +252,11 @@ var Unflat = function () {
             return item[children];
         }
     }, {
-        key: 'customSort',
-        value: function customSort(items, sortBy) {
-            var res = [];
-            for (var i = 0; i < sortBy.length; i++) {
-                var sortObject = sortBy[i];
-
-                var _loop = function _loop(key) {
-                    if (!sortObject.hasOwnProperty(key)) {
-                        return 'continue';
-                    }
-                    var tempArr = [];
-                    // custom sort entity
-                    var sortItem = sortObject[key];
-
-                    // if not string breaks next steps
-                    if ((0, _isFunction3.default)(sortItem)) {
-                        var resultCallback = sortItem(items, key);
-
-                        return {
-                            v: (0, _concat3.default)(res, resultCallback)
-                        };
-                    }
-                    // sorts by splitted string (clears items) for next steps "custom sort"
-                    if ((0, _isString3.default)(sortItem)) {
-                        var sortItemSplitted = (0, _split3.default)(sortItem, ',');
-
-                        (0, _each3.default)(sortItemSplitted, function (value) {
-                            var findObject = {};
-
-                            value = (0, _trim3.default)(value);
-                            findObject[key] = value;
-                            var finded = (0, _find3.default)(items, findObject);
-
-                            if (finded) {
-                                tempArr.push(finded);
-
-                                // remove just added item for accelerating next steps
-                                items.splice((0, _findIndex3.default)(items, findObject), 1);
-                            }
-                        });
-
-                        res = (0, _concat3.default)(res, tempArr);
-                    }
-                };
-
-                for (var key in sortObject) {
-                    var _ret = _loop(key);
-
-                    switch (_ret) {
-                        case 'continue':
-                            continue;
-
-                        default:
-                            if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
-                    }
-                }
-            }
-            // prepends items which left after "custom sort"
-            return (0, _concat3.default)(res, items);
-        }
-    }, {
         key: 'sort',
         value: function sort(items, sortBy) {
             // detecting custom sort
             if ((0, _isArray3.default)(sortBy) && (0, _isPlainObject3.default)(sortBy[0])) {
-                return this.customSort(items, sortBy);
+                return (0, _sortOrderBy2.default)(items, sortBy);
             }
             return (0, _sortBy3.default)(items, sortBy);
         }
