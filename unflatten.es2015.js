@@ -1,55 +1,31 @@
 import _ from 'lodash';
 import sortOrderBy from 'sort-order-by';
 
-class EntityModel {
-    constructor (item, parent, parentName, entities) {
-        _.assign(this, item);
-
-        this._entities = entities;
-
-        if (parent) {
-            this._parentId = parent._id;
-            this._parentName = parentName;
-        }
-    }
-
-    _getParents (one, parentId = this._parentId, parentName = this._parentName, res) {
-        if (!res) {
-            res = {};
-        }
-
-        const parent = _.find(this._entities[parentName], { _id: parentId });
-
-        res[parentName] = parent;
-        if (parent._parentId && !one) {
-            return this._getParents(false, parent._parentId, parent._parentName, res);
-        }
-
-        return res;
-    }
-
-    get parent () {
-        return this._getParents(true);
-    }
-
-    get parents () {
-        return this._getParents();
-    }
-}
+let _parents = new WeakMap();
+let _counter = new WeakMap();
 
 class Unflat {
-    constructor (data, orderSort, mappers) {
+    constructor (data, orderGroup, mappers) {
         this.items = data;
-        this.orderSortUnFiltered = orderSort;
-        this.orderSort = _.filter(orderSort, 'id');
+        this.orderGroupUnFiltered = orderGroup;
+        this.orderGroup = _.filter(orderGroup, 'id');
         this.entities = {};
-        _.each(orderSort, item => {
-            if (!_.isUndefined(item.children)) {
-                this.entities[item.children] = [];
+        this.mappers = mappers;
+        _.each(orderGroup, item => {
+            if (!_.isUndefined(item.children.name)) {
+                this.entities[item.children.name] = [];
             }
         });
-        this._id = 0;
-        this.groupedItems = this.unflat(mappers);
+        _counter.set(this, 0);
+        _parents.set(this, {});
+        this[orderGroup[0].children.name] = this.unflat();
+
+        // set collections for entities
+        _.each(orderGroup, order => {
+            if (order.entityCollection) {
+                this.entities[order.children.name] = new order.entityCollection(this.entities[order.children.name]);
+            }
+        });
     }
 
     setEntity (arr, current) {
@@ -67,7 +43,7 @@ class Unflat {
                 entity[prop] = firstItem[prop];
             });
 
-            entity[`${current.children}_temp`] = items;
+            entity[`${current.children.name}_temp`] = items;
 
             tempArr.push(entity);
         });
@@ -76,7 +52,10 @@ class Unflat {
     }
 
     setId (item) {
-        item._id = ++this._id;
+        let counter = _counter.get(this);
+        counter++;
+        _counter.set(this, counter);
+        item._id = counter;
         return item;
     }
 
@@ -84,80 +63,85 @@ class Unflat {
         return _.map(items, this.setId.bind(this));
     }
 
-    initEntityModel (item, parent, parentName) {
-        return new EntityModel(item, parent, parentName, this.entities);
-    }
-
-    initEntitiesModel (items, parent, parentName) {
-        return _.map(items, item => this.initEntityModel(item, parent, parentName));
-    }
-
-    initModel (items, isLast, parent, parentName) {
-        if (!parent) {
-            return this.setIds(items);
+    initEntityModel (item, children, parent, parentChildren) {
+        if (!children.model) {
+            return item;
         }
+        if (parent) {
+            return new children.model(item, parent, parentChildren.name, _parents.get(this));
+        }
+        return new children.model(item);
+    }
+
+    initEntitiesModel (items, children, parent, parentName) {
+        return _.map(items, item => this.initEntityModel(item, children, parent, parentName));
+    }
+
+    initModel (items, children, parent, parentChildren, isLast) {
         if (isLast) {
-            return this.initEntitiesModel(items, parent, parentName);
+            return this.initEntitiesModel(items, children, parent, parentChildren);
         }
 
         return _.map(items, item => {
             this.setId(item);
-            return this.initEntityModel(item, parent, parentName);
+            return this.initEntityModel(item, children, parent, parentChildren);
         });
     }
 
-    deepUnflat (arr, current, key, orderSort, isDeep) {
-        const isLast = key === orderSort.length - 1;
+    deepUnflat (arr, current, key, orderGroup, isDeep) {
+        const isLast = key === orderGroup.length - 1;
 
         if (key === 0) {
-            let level0 = this.initModel(this.setEntity(arr, current, key, orderSort));
+            let level0 = this.initModel(this.setEntity(arr, current, key, orderGroup), this.orderGroupUnFiltered[0].children);
 
-            const firstSort = this.orderSortUnFiltered[key].sortBy;
+            const firstSort = this.orderGroupUnFiltered[key].sortBy;
             if (firstSort) {
-                level0 = this.sort(level0, firstSort);
+                level0 = Unflat.sort(level0, firstSort);
             }
 
-            this.entities[this.orderSortUnFiltered[key].children] = level0;
+            this.entities[this.orderGroupUnFiltered[key].children.name] = level0;
             return level0;
         }
 
         if (key === 1 || isDeep) {
-            return _.each(arr, itemParent => {
-                const prevChildren = orderSort[key - 1].children,
-                    entities = this.setEntity(itemParent[`${prevChildren}_temp`], current, key, orderSort, itemParent);
+            _.each(arr, itemParent => {
+                const prevChildren = orderGroup[key - 1].children;
+                const entities = this.setEntity(itemParent[`${prevChildren.name}_temp`], current, key, orderGroup, itemParent);
 
-                this.collectChildrenEntities(entities, itemParent, prevChildren, key === 1 ? this.orderSortUnFiltered[0].children : orderSort[key - 2].children, orderSort[key - 1].sortBy);
+                this.collectChildrenEntities(entities, itemParent, prevChildren, key === 1 ? this.orderGroupUnFiltered[0].children : orderGroup[key - 2].children, orderGroup[key - 1].sortBy);
 
                 if (isLast) {
-                    _.each(itemParent[prevChildren], item => {
-                        this.collectChildrenEntities(item[`${current.children}_temp`], item, current.children, prevChildren, current.sortBy, true);
+                    _.each(itemParent[prevChildren.name], item => {
+                        this.collectChildrenEntities(item[`${current.children.name}_temp`], item, current.children, prevChildren, current.sortBy, true);
                     });
                 }
             });
+            return arr;
         }
 
         // run deepUnflat for entities which are deeply
         if (key > 1 && !isDeep) {
-            _.each(this.entities[orderSort[key - 2].children], items => this.deepUnflat([items], current, key, orderSort, true));
+            _.each(this.entities[orderGroup[key - 2].children.name], items => this.deepUnflat([items], current, key, orderGroup, true));
         }
         return arr;
     }
 
     // sets chidren, do sort, init model where is getters: parent, parents, removes temp array
-    collectChildrenEntities (entities, item, children, parentName, sortBy, isLast) {
-        const prevChildrenTemp = `${children}_temp`;
+    collectChildrenEntities (entities, item, children, parentChildren, sortBy, isLast) {
+        const childrenName = children.name;
+        const prevChildrenTemp = `${childrenName}_temp`;
 
-        item[children] = this.initModel(entities, isLast, item, parentName);
+        item[childrenName] = this.initModel(entities, children, item, parentChildren, isLast);
         if (sortBy) {
-            item[children] = this.sort(item[children], sortBy);
+            item[childrenName] = Unflat.sort(item[childrenName], sortBy);
         }
         delete item[prevChildrenTemp];
-        this.entities[children] = _.concat(this.entities[children], item[children]);
+        this.entities[childrenName] = _.concat(this.entities[childrenName], item[childrenName]);
 
-        return item[children];
+        return item[childrenName];
     }
 
-    sort (items, sortBy) {
+    static sort (items, sortBy) {
         // detecting custom sort
         if (_.isArray(sortBy) && _.isPlainObject(sortBy[0])) {
             return sortOrderBy(items, sortBy);
@@ -165,26 +149,34 @@ class Unflat {
         return _.sortBy(items, sortBy);
     }
 
-    unflat (mappers) {
-        if (this.orderSort) {
-            let remappedItems = this.items;
-            if (mappers) {
-                remappedItems = _.map(this.items, item => {
-                    _.each(mappers, (prop, key) => {
-                        item[prop] = item[key];
-                        delete item[key];
-                    });
-                    return item;
+    remap () {
+        const mappers = this.mappers;
+        if (_.isPlainObject(mappers) && _.size(mappers)) {
+            return _.map(this.items, item => {
+                _.each(mappers, (prop, key) => {
+                    item[prop] = item[key];
+                    delete item[key];
                 });
-            }
-            return _.reduce(this.orderSort, this.deepUnflat.bind(this), remappedItems);
+                return item;
+            });
         }
-        return null;
+
+        return this.items;
+    }
+
+    unflat () {
+        if (_.isArray(this.orderGroup) && _.size(this.orderGroup)) {
+            const remappedItems = this.remap();
+
+            return _.reduce(this.orderGroup, this.deepUnflat.bind(this), remappedItems);
+        }
+        return [];
     }
 }
 
-function unflat (data, orderSort, mappers) {
-    return new Unflat(data, orderSort, mappers);
+module.exports = (data, orderGroup, mappers) => {
+    if (_.isArray(data) && _.size(data)) {
+        return new Unflat(data, orderGroup, mappers);
+    }
+    return {};
 }
-
-module.exports = unflat;

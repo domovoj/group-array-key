@@ -4,6 +4,10 @@ var _reduce2 = require('lodash/reduce');
 
 var _reduce3 = _interopRequireDefault(_reduce2);
 
+var _size2 = require('lodash/size');
+
+var _size3 = _interopRequireDefault(_size2);
+
 var _sortBy2 = require('lodash/sortBy');
 
 var _sortBy3 = _interopRequireDefault(_sortBy2);
@@ -40,14 +44,6 @@ var _filter2 = require('lodash/filter');
 
 var _filter3 = _interopRequireDefault(_filter2);
 
-var _find2 = require('lodash/find');
-
-var _find3 = _interopRequireDefault(_find2);
-
-var _assign2 = require('lodash/assign');
-
-var _assign3 = _interopRequireDefault(_assign2);
-
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _sortOrderBy = require('sort-order-by');
@@ -58,72 +54,35 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var EntityModel = function () {
-    function EntityModel(item, parent, parentName, entities) {
-        _classCallCheck(this, EntityModel);
-
-        (0, _assign3.default)(this, item);
-
-        this._entities = entities;
-
-        if (parent) {
-            this._parentId = parent._id;
-            this._parentName = parentName;
-        }
-    }
-
-    _createClass(EntityModel, [{
-        key: '_getParents',
-        value: function _getParents(one) {
-            var parentId = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this._parentId;
-            var parentName = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this._parentName;
-            var res = arguments[3];
-
-            if (!res) {
-                res = {};
-            }
-
-            var parent = (0, _find3.default)(this._entities[parentName], { _id: parentId });
-
-            res[parentName] = parent;
-            if (parent._parentId && !one) {
-                return this._getParents(false, parent._parentId, parent._parentName, res);
-            }
-
-            return res;
-        }
-    }, {
-        key: 'parent',
-        get: function get() {
-            return this._getParents(true);
-        }
-    }, {
-        key: 'parents',
-        get: function get() {
-            return this._getParents();
-        }
-    }]);
-
-    return EntityModel;
-}();
+var _parents = new WeakMap();
+var _counter = new WeakMap();
 
 var Unflat = function () {
-    function Unflat(data, orderSort, mappers) {
+    function Unflat(data, orderGroup, mappers) {
         var _this = this;
 
         _classCallCheck(this, Unflat);
 
         this.items = data;
-        this.orderSortUnFiltered = orderSort;
-        this.orderSort = (0, _filter3.default)(orderSort, 'id');
+        this.orderGroupUnFiltered = orderGroup;
+        this.orderGroup = (0, _filter3.default)(orderGroup, 'id');
         this.entities = {};
-        (0, _each3.default)(orderSort, function (item) {
-            if (!(0, _isUndefined3.default)(item.children)) {
-                _this.entities[item.children] = [];
+        this.mappers = mappers;
+        (0, _each3.default)(orderGroup, function (item) {
+            if (!(0, _isUndefined3.default)(item.children.name)) {
+                _this.entities[item.children.name] = [];
             }
         });
-        this._id = 0;
-        this.groupedItems = this.unflat(mappers);
+        _counter.set(this, 0);
+        _parents.set(this, {});
+        this[orderGroup[0].children.name] = this.unflat();
+
+        // set collections for entities
+        (0, _each3.default)(orderGroup, function (order) {
+            if (order.entityCollection) {
+                _this.entities[order.children.name] = new order.entityCollection(_this.entities[order.children.name]);
+            }
+        });
     }
 
     _createClass(Unflat, [{
@@ -143,7 +102,7 @@ var Unflat = function () {
                     entity[prop] = firstItem[prop];
                 });
 
-                entity[current.children + '_temp'] = items;
+                entity[current.children.name + '_temp'] = items;
 
                 tempArr.push(entity);
             });
@@ -153,7 +112,10 @@ var Unflat = function () {
     }, {
         key: 'setId',
         value: function setId(item) {
-            item._id = ++this._id;
+            var counter = _counter.get(this);
+            counter++;
+            _counter.set(this, counter);
+            item._id = counter;
             return item;
         }
     }, {
@@ -163,73 +125,77 @@ var Unflat = function () {
         }
     }, {
         key: 'initEntityModel',
-        value: function initEntityModel(item, parent, parentName) {
-            return new EntityModel(item, parent, parentName, this.entities);
+        value: function initEntityModel(item, children, parent, parentChildren) {
+            if (!children.model) {
+                return item;
+            }
+            if (parent) {
+                return new children.model(item, parent, parentChildren.name, _parents.get(this));
+            }
+            return new children.model(item);
         }
     }, {
         key: 'initEntitiesModel',
-        value: function initEntitiesModel(items, parent, parentName) {
+        value: function initEntitiesModel(items, children, parent, parentName) {
             var _this2 = this;
 
             return (0, _map3.default)(items, function (item) {
-                return _this2.initEntityModel(item, parent, parentName);
+                return _this2.initEntityModel(item, children, parent, parentName);
             });
         }
     }, {
         key: 'initModel',
-        value: function initModel(items, isLast, parent, parentName) {
+        value: function initModel(items, children, parent, parentChildren, isLast) {
             var _this3 = this;
 
-            if (!parent) {
-                return this.setIds(items);
-            }
             if (isLast) {
-                return this.initEntitiesModel(items, parent, parentName);
+                return this.initEntitiesModel(items, children, parent, parentChildren);
             }
 
             return (0, _map3.default)(items, function (item) {
                 _this3.setId(item);
-                return _this3.initEntityModel(item, parent, parentName);
+                return _this3.initEntityModel(item, children, parent, parentChildren);
             });
         }
     }, {
         key: 'deepUnflat',
-        value: function deepUnflat(arr, current, key, orderSort, isDeep) {
+        value: function deepUnflat(arr, current, key, orderGroup, isDeep) {
             var _this4 = this;
 
-            var isLast = key === orderSort.length - 1;
+            var isLast = key === orderGroup.length - 1;
 
             if (key === 0) {
-                var level0 = this.initModel(this.setEntity(arr, current, key, orderSort));
+                var level0 = this.initModel(this.setEntity(arr, current, key, orderGroup), this.orderGroupUnFiltered[0].children);
 
-                var firstSort = this.orderSortUnFiltered[key].sortBy;
+                var firstSort = this.orderGroupUnFiltered[key].sortBy;
                 if (firstSort) {
-                    level0 = this.sort(level0, firstSort);
+                    level0 = Unflat.sort(level0, firstSort);
                 }
 
-                this.entities[this.orderSortUnFiltered[key].children] = level0;
+                this.entities[this.orderGroupUnFiltered[key].children.name] = level0;
                 return level0;
             }
 
             if (key === 1 || isDeep) {
-                return (0, _each3.default)(arr, function (itemParent) {
-                    var prevChildren = orderSort[key - 1].children,
-                        entities = _this4.setEntity(itemParent[prevChildren + '_temp'], current, key, orderSort, itemParent);
+                (0, _each3.default)(arr, function (itemParent) {
+                    var prevChildren = orderGroup[key - 1].children;
+                    var entities = _this4.setEntity(itemParent[prevChildren.name + '_temp'], current, key, orderGroup, itemParent);
 
-                    _this4.collectChildrenEntities(entities, itemParent, prevChildren, key === 1 ? _this4.orderSortUnFiltered[0].children : orderSort[key - 2].children, orderSort[key - 1].sortBy);
+                    _this4.collectChildrenEntities(entities, itemParent, prevChildren, key === 1 ? _this4.orderGroupUnFiltered[0].children : orderGroup[key - 2].children, orderGroup[key - 1].sortBy);
 
                     if (isLast) {
-                        (0, _each3.default)(itemParent[prevChildren], function (item) {
-                            _this4.collectChildrenEntities(item[current.children + '_temp'], item, current.children, prevChildren, current.sortBy, true);
+                        (0, _each3.default)(itemParent[prevChildren.name], function (item) {
+                            _this4.collectChildrenEntities(item[current.children.name + '_temp'], item, current.children, prevChildren, current.sortBy, true);
                         });
                     }
                 });
+                return arr;
             }
 
             // run deepUnflat for entities which are deeply
             if (key > 1 && !isDeep) {
-                (0, _each3.default)(this.entities[orderSort[key - 2].children], function (items) {
-                    return _this4.deepUnflat([items], current, key, orderSort, true);
+                (0, _each3.default)(this.entities[orderGroup[key - 2].children.name], function (items) {
+                    return _this4.deepUnflat([items], current, key, orderGroup, true);
                 });
             }
             return arr;
@@ -239,19 +205,46 @@ var Unflat = function () {
 
     }, {
         key: 'collectChildrenEntities',
-        value: function collectChildrenEntities(entities, item, children, parentName, sortBy, isLast) {
-            var prevChildrenTemp = children + '_temp';
+        value: function collectChildrenEntities(entities, item, children, parentChildren, sortBy, isLast) {
+            var childrenName = children.name;
+            var prevChildrenTemp = childrenName + '_temp';
 
-            item[children] = this.initModel(entities, isLast, item, parentName);
+            item[childrenName] = this.initModel(entities, children, item, parentChildren, isLast);
             if (sortBy) {
-                item[children] = this.sort(item[children], sortBy);
+                item[childrenName] = Unflat.sort(item[childrenName], sortBy);
             }
             delete item[prevChildrenTemp];
-            this.entities[children] = (0, _concat3.default)(this.entities[children], item[children]);
+            this.entities[childrenName] = (0, _concat3.default)(this.entities[childrenName], item[childrenName]);
 
-            return item[children];
+            return item[childrenName];
         }
     }, {
+        key: 'remap',
+        value: function remap() {
+            var mappers = this.mappers;
+            if ((0, _isPlainObject3.default)(mappers) && (0, _size3.default)(mappers)) {
+                return (0, _map3.default)(this.items, function (item) {
+                    (0, _each3.default)(mappers, function (prop, key) {
+                        item[prop] = item[key];
+                        delete item[key];
+                    });
+                    return item;
+                });
+            }
+
+            return this.items;
+        }
+    }, {
+        key: 'unflat',
+        value: function unflat() {
+            if ((0, _isArray3.default)(this.orderGroup) && (0, _size3.default)(this.orderGroup)) {
+                var remappedItems = this.remap();
+
+                return (0, _reduce3.default)(this.orderGroup, this.deepUnflat.bind(this), remappedItems);
+            }
+            return [];
+        }
+    }], [{
         key: 'sort',
         value: function sort(items, sortBy) {
             // detecting custom sort
@@ -260,31 +253,14 @@ var Unflat = function () {
             }
             return (0, _sortBy3.default)(items, sortBy);
         }
-    }, {
-        key: 'unflat',
-        value: function unflat(mappers) {
-            if (this.orderSort) {
-                var remappedItems = this.items;
-                if (mappers) {
-                    remappedItems = (0, _map3.default)(this.items, function (item) {
-                        (0, _each3.default)(mappers, function (prop, key) {
-                            item[prop] = item[key];
-                            delete item[key];
-                        });
-                        return item;
-                    });
-                }
-                return (0, _reduce3.default)(this.orderSort, this.deepUnflat.bind(this), remappedItems);
-            }
-            return null;
-        }
     }]);
 
     return Unflat;
 }();
 
-function unflat(data, orderSort, mappers) {
-    return new Unflat(data, orderSort, mappers);
-}
-
-module.exports = unflat;
+module.exports = function (data, orderGroup, mappers) {
+    if ((0, _isArray3.default)(data) && (0, _size3.default)(data)) {
+        return new Unflat(data, orderGroup, mappers);
+    }
+    return {};
+};
