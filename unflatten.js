@@ -13,7 +13,7 @@ class Unflat {
         this.mappers = mappers;
         _.each(orderGroup, item => {
             // check interface of children and existing name
-            if (!_.isPlainObject(item.children)) {
+            if (_.isPlainObject(item.children) && item.children.name) {
                 this.entities[item.children.name] = [];
             }
         });

@@ -113,7 +113,7 @@ var unflatten =
 	        this.mappers = mappers;
 	        (0, _each3.default)(orderGroup, function (item) {
 	            // check interface of children and existing name
-	            if (!(0, _isPlainObject3.default)(item.children)) {
+	            if ((0, _isPlainObject3.default)(item.children) && item.children.name) {
 	                _this.entities[item.children.name] = [];
 	            }
 	        });
