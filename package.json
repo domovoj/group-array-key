@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha test/index.test.js",
-    "commonjs": "babel unflatten.es2015.js --out-file unflatten.commonjs.js",
-    "browser": "babel unflatten.es2015.js --out-file unflatten.browser.js && webpack",
+    "commonjs": "babel unflatten.js --out-file unflatten.commonjs.js",
+    "browser": "babel unflatten.js --out-file unflatten.browser.js && webpack",
     "build-all": "npm run commonjs && npm run browser"
   },
   "author": "",
