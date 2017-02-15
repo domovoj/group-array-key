@@ -141,8 +141,8 @@ var unflatten =
 	        this[this.firstOrderGroup.name] = this.unflat();
 	        // set collections for entities
 	        (0, _each3.default)(orderGroup, function (itemOrderGroup) {
-	            if (itemOrderGroup.entityCollection) {
-	                _this.entities[itemOrderGroup.name] = new itemOrderGroup.entityCollection(_this.entities[itemOrderGroup.name]);
+	            if (itemOrderGroup.collection) {
+	                _this.entities[itemOrderGroup.name] = new itemOrderGroup.collection(_this.entities[itemOrderGroup.name]);
 	            }
 	        });
 	    }
@@ -213,8 +213,8 @@ var unflatten =
 
 	                this.entities[this.firstOrderGroup.name] = level0;
 
-	                if (this.firstOrderGroup.entityCollection) {
-	                    return new this.firstOrderGroup.entityCollection(level0);
+	                if (this.firstOrderGroup.collection) {
+	                    return new this.firstOrderGroup.collection(level0);
 	                }
 	                return level0;
 	            }
@@ -261,8 +261,8 @@ var unflatten =
 	            this.entities[currentOrderGroup.name] = (0, _concat3.default)(this.entities[currentOrderGroup.name], collection);
 
 	            // create instance of collection
-	            if (currentOrderGroup.entityCollection) {
-	                collection = new currentOrderGroup.entityCollection(collection);
+	            if (currentOrderGroup.collection) {
+	                collection = new currentOrderGroup.collection(collection);
 	            }
 
 	            item[currentOrderGroup.name] = collection;

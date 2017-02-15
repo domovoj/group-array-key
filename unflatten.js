@@ -29,8 +29,8 @@ class Unflat {
         this[this.firstOrderGroup.name] = this.unflat();
         // set collections for entities
         _.each(orderGroup, itemOrderGroup => {
-            if (itemOrderGroup.entityCollection) {
-                this.entities[itemOrderGroup.name] = new itemOrderGroup.entityCollection(this.entities[itemOrderGroup.name]);
+            if (itemOrderGroup.collection) {
+                this.entities[itemOrderGroup.name] = new itemOrderGroup.collection(this.entities[itemOrderGroup.name]);
             }
         });
     }
@@ -112,8 +112,8 @@ class Unflat {
 
             this.entities[this.firstOrderGroup.name] = level0;
 
-            if (this.firstOrderGroup.entityCollection) {
-                return new this.firstOrderGroup.entityCollection(level0);
+            if (this.firstOrderGroup.collection) {
+                return new this.firstOrderGroup.collection(level0);
             }
             return level0;
         }
@@ -155,8 +155,8 @@ class Unflat {
         this.entities[currentOrderGroup.name] = _.concat(this.entities[currentOrderGroup.name], collection);
 
         // create instance of collection
-        if (currentOrderGroup.entityCollection) {
-            collection = new currentOrderGroup.entityCollection(collection);
+        if (currentOrderGroup.collection) {
+            collection = new currentOrderGroup.collection(collection);
         }
 
         item[currentOrderGroup.name] = collection;
