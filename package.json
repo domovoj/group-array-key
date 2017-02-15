@@ -7,7 +7,7 @@
     "test": "mocha test/index.test.js",
     "commonjs": "babel unflatten.js --out-file unflatten.commonjs.js",
     "browser": "babel unflatten.js --out-file unflatten.browser.js && webpack",
-    "build-all": "npm run commonjs && npm run browser"
+    "build": "npm run commonjs && npm run browser"
   },
   "author": "",
   "license": "ISC",
