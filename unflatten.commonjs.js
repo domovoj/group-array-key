@@ -4,6 +4,10 @@ var _dropRight2 = require('lodash/dropRight');
 
 var _dropRight3 = _interopRequireDefault(_dropRight2);
 
+var _reduce2 = require('lodash/reduce');
+
+var _reduce3 = _interopRequireDefault(_reduce2);
+
 var _size2 = require('lodash/size');
 
 var _size3 = _interopRequireDefault(_size2);
@@ -32,9 +36,9 @@ var _keys2 = require('lodash/keys');
 
 var _keys3 = _interopRequireDefault(_keys2);
 
-var _reduce2 = require('lodash/reduce');
+var _forOwn2 = require('lodash/forOwn');
 
-var _reduce3 = _interopRequireDefault(_reduce2);
+var _forOwn3 = _interopRequireDefault(_forOwn2);
 
 var _each2 = require('lodash/each');
 
@@ -120,10 +124,10 @@ var Unflat = function () {
         (0, _each3.default)(this.orderGroup, function (orderGroup) {
             return orderGroup._setItems(_this.orderGroup);
         });
-        this.entities = (0, _reduce3.default)(this.orderGroup, function (entities, item) {
-            entities[item.name] = [];
-            return entities;
-        }, {});
+        this.entities = {};
+        (0, _forOwn3.default)(this.orderGroup, function (item) {
+            return _this.entities[item.name] = [];
+        });
         _counter.set(this, 0);
         _parents.set(this, {});
 
@@ -301,7 +305,7 @@ var unflatten = function unflatten(items) {
         orderGroup[_key2 - 1] = arguments[_key2];
     }
 
-    if ((0, _isArray3.default)(items) && (0, _size3.default)(items)) {
+    if ((0, _isArray3.default)(items) && (0, _size3.default)(items) && (0, _size3.default)(orderGroup)) {
         return new Unflat(items, orderGroup);
     }
     return {};

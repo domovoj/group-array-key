@@ -37,10 +37,8 @@ class Unflat {
         this.items = data;
         this.orderGroup = _.map(orderGroup, (orderGroupItem, key) => new OrderGroupModel(orderGroupItem, key, orderGroup));
         _.each(this.orderGroup, orderGroup => orderGroup._setItems(this.orderGroup));
-        this.entities = _.reduce(this.orderGroup, (entities, item) => {
-            entities[item.name] = [];
-            return entities;
-        }, {});
+        this.entities = {};
+        _.forOwn(this.orderGroup, item => this.entities[item.name] = []);
         _counter.set(this, 0);
         _parents.set(this, {});
 
@@ -175,7 +173,7 @@ class Unflat {
 }
 
 const unflatten = (items, ...orderGroup) => {
-    if (_.isArray(items) && _.size(items)) {
+    if (_.isArray(items) && _.size(items) && _.size(orderGroup)) {
         return new Unflat(items, orderGroup);
     }
     return {};
