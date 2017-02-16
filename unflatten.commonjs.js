@@ -16,6 +16,10 @@ var _isArray2 = require('lodash/isArray');
 
 var _isArray3 = _interopRequireDefault(_isArray2);
 
+var _groupBy2 = require('lodash/groupBy');
+
+var _groupBy3 = _interopRequireDefault(_groupBy2);
+
 var _concat2 = require('lodash/concat');
 
 var _concat3 = _interopRequireDefault(_concat2);
@@ -24,9 +28,9 @@ var _pick2 = require('lodash/pick');
 
 var _pick3 = _interopRequireDefault(_pick2);
 
-var _groupBy2 = require('lodash/groupBy');
+var _keys2 = require('lodash/keys');
 
-var _groupBy3 = _interopRequireDefault(_groupBy2);
+var _keys3 = _interopRequireDefault(_keys2);
 
 var _each2 = require('lodash/each');
 
@@ -179,27 +183,15 @@ var Unflat = function () {
             var _this4 = this;
 
             if (key === 0) {
-                var entities = Unflat.setEntities(arr, currentOrderGroup, currentOrderGroup.next);
-                var level0 = this.initModels(entities, currentOrderGroup);
-
-                var sortBy = currentOrderGroup.sortBy;
-                if (sortBy) {
-                    level0 = Unflat.sort(level0, sortBy);
-                }
-
-                this.entities[currentOrderGroup.name] = level0;
-
-                if (currentOrderGroup.collection) {
-                    return new currentOrderGroup.collection(level0);
-                }
-                return level0;
+                return this.collectEntities(arr, currentOrderGroup);
             }
 
             if (key === 1 || isDeep) {
                 return (0, _each3.default)(arr, function (item) {
-                    var entities = Unflat.setEntities(item[currentOrderGroup.name + '_temp'], currentOrderGroup, currentOrderGroup.next);
+                    var tempName = currentOrderGroup.name + '_temp';
 
-                    _this4.collectChildrenEntities(entities, item, currentOrderGroup, currentOrderGroup.sortBy);
+                    item[currentOrderGroup.name] = _this4.collectEntities(item[tempName], currentOrderGroup);
+                    delete item[tempName];
                 });
             }
 
@@ -215,12 +207,12 @@ var Unflat = function () {
         // sets chidren, do sort, init model where is getters: parent, parents, removes temp array
 
     }, {
-        key: 'collectChildrenEntities',
-        value: function collectChildrenEntities(entities, parent, currentOrderGroup, sortBy) {
-            var tempName = currentOrderGroup.name + '_temp';
+        key: 'collectEntities',
+        value: function collectEntities(items, currentOrderGroup) {
+            var entities = Unflat.setEntities(items, currentOrderGroup, currentOrderGroup.next);
+            var collection = this.initModels(entities, currentOrderGroup);
 
-            var collection = this.initModels(entities, currentOrderGroup, parent);
-
+            var sortBy = currentOrderGroup.sortBy;
             if (sortBy) {
                 collection = Unflat.sort(collection, sortBy);
             }
@@ -230,12 +222,10 @@ var Unflat = function () {
 
             // create instance of collection
             if (currentOrderGroup.collection) {
-                collection = new currentOrderGroup.collection(collection);
+                return new currentOrderGroup.collection(collection);
             }
 
-            parent[currentOrderGroup.name] = collection;
-
-            delete parent[tempName];
+            return collection;
         }
     }, {
         key: 'unflat',
@@ -254,19 +244,33 @@ var Unflat = function () {
             return [];
         }
     }], [{
+        key: 'populateEntity',
+        value: function populateEntity(tempArr, currentOrderGroup, item, isLast) {
+            var allPropsForLast = isLast && (0, _keys3.default)(item) || [];
+            var propIdForAllExceptLast = !isLast && currentOrderGroup.id || [];
+            var entity = (0, _pick3.default)(item, (0, _concat3.default)(currentOrderGroup.props || allPropsForLast, propIdForAllExceptLast));
+            tempArr.push(entity);
+            return entity;
+        }
+    }, {
         key: 'setEntities',
         value: function setEntities(arr, currentOrderGroup, nextOrderGroup) {
-            if (!nextOrderGroup) {
-                return arr;
-            }
+            var _this6 = this;
+
             var tempArr = [];
 
+            // for last
+            if (!nextOrderGroup) {
+                (0, _each3.default)(arr, function (item) {
+                    return _this6.populateEntity(tempArr, currentOrderGroup, item, true);
+                });
+                return tempArr;
+            }
+
             (0, _each3.default)((0, _groupBy3.default)(arr, currentOrderGroup.id), function (items) {
-                var entity = (0, _pick3.default)(items[0], (0, _concat3.default)(currentOrderGroup.props || [], currentOrderGroup.id));
+                var entity = _this6.populateEntity(tempArr, currentOrderGroup, items[0]);
 
                 entity[nextOrderGroup.name + '_temp'] = items;
-
-                tempArr.push(entity);
             });
 
             return tempArr;
