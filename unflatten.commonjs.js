@@ -8,10 +8,6 @@ var _reduce2 = require('lodash/reduce');
 
 var _reduce3 = _interopRequireDefault(_reduce2);
 
-var _size2 = require('lodash/size');
-
-var _size3 = _interopRequireDefault(_size2);
-
 var _sortBy2 = require('lodash/sortBy');
 
 var _sortBy3 = _interopRequireDefault(_sortBy2);
@@ -47,6 +43,10 @@ var _each3 = _interopRequireDefault(_each2);
 var _map2 = require('lodash/map');
 
 var _map3 = _interopRequireDefault(_map2);
+
+var _size2 = require('lodash/size');
+
+var _size3 = _interopRequireDefault(_size2);
 
 var _findIndex2 = require('lodash/findIndex');
 
@@ -118,6 +118,9 @@ var Unflat = function () {
         _classCallCheck(this, Unflat);
 
         this.items = data;
+        if (!(0, _size3.default)(orderGroup)) {
+            return;
+        }
         this.orderGroup = (0, _map3.default)(orderGroup, function (orderGroupItem, key) {
             return new OrderGroupModel(orderGroupItem, key, orderGroup);
         });
@@ -305,7 +308,7 @@ var unflatten = function unflatten(items) {
         orderGroup[_key2 - 1] = arguments[_key2];
     }
 
-    if ((0, _isArray3.default)(items) && (0, _size3.default)(items) && (0, _size3.default)(orderGroup)) {
+    if ((0, _isArray3.default)(items) && (0, _size3.default)(items)) {
         return new Unflat(items, orderGroup);
     }
     return {};
