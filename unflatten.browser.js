@@ -6279,13 +6279,13 @@ var _keys2 = __webpack_require__(6);
 
 var _keys3 = _interopRequireDefault(_keys2);
 
-var _each2 = __webpack_require__(35);
-
-var _each3 = _interopRequireDefault(_each2);
-
 var _reduce2 = __webpack_require__(66);
 
 var _reduce3 = _interopRequireDefault(_reduce2);
+
+var _each2 = __webpack_require__(35);
+
+var _each3 = _interopRequireDefault(_each2);
 
 var _map2 = __webpack_require__(64);
 
@@ -6318,15 +6318,14 @@ var _counter = new WeakMap();
 var _orderGroups = new WeakMap();
 
 var OrderGroupModel = function () {
-    function OrderGroupModel(item, items) {
+    function OrderGroupModel(item, key, items) {
         _classCallCheck(this, OrderGroupModel);
 
         if ((0, _isPlainObject3.default)(item)) {
             (0, _assign3.default)(this, item);
         } else {
-            (0, _assign3.default)(this, { name: item });
+            (0, _assign3.default)(this, { name: item }, items.length - 1 !== key ? { id: item } : {});
         }
-        _orderGroups.set(this, items);
     }
 
     _createClass(OrderGroupModel, [{
@@ -6334,6 +6333,11 @@ var OrderGroupModel = function () {
         value: function _getSiblings(prevOrNext) {
             var items = _orderGroups.get(this);
             return items[(0, _findIndex3.default)(items, { name: this.name }) + prevOrNext];
+        }
+    }, {
+        key: '_setItems',
+        value: function _setItems(items) {
+            _orderGroups.set(this, items);
         }
     }, {
         key: 'next',
@@ -6357,8 +6361,11 @@ var Unflat = function () {
         _classCallCheck(this, Unflat);
 
         this.items = data;
-        this.orderGroup = (0, _map3.default)(orderGroup, function (orderGroupItem) {
-            return new OrderGroupModel(orderGroupItem, orderGroup);
+        this.orderGroup = (0, _map3.default)(orderGroup, function (orderGroupItem, key) {
+            return new OrderGroupModel(orderGroupItem, key, orderGroup);
+        });
+        (0, _each3.default)(this.orderGroup, function (orderGroup) {
+            return orderGroup._setItems(_this.orderGroup);
         });
         this.entities = (0, _reduce3.default)(this.orderGroup, function (entities, item) {
             entities[item.name] = [];
@@ -6437,7 +6444,7 @@ var Unflat = function () {
                 return (0, _each3.default)(arr, function (item) {
                     var tempName = currentOrderGroup.name + '_temp';
 
-                    item[currentOrderGroup.name] = _this4.collectEntities(item[tempName], currentOrderGroup);
+                    item[currentOrderGroup.name] = _this4.collectEntities(item[tempName], currentOrderGroup, item);
                     delete item[tempName];
                 });
             }
@@ -6455,9 +6462,9 @@ var Unflat = function () {
 
     }, {
         key: 'collectEntities',
-        value: function collectEntities(items, currentOrderGroup) {
+        value: function collectEntities(items, currentOrderGroup, parent) {
             var entities = Unflat.setEntities(items, currentOrderGroup, currentOrderGroup.next);
-            var collection = this.initModels(entities, currentOrderGroup);
+            var collection = this.initModels(entities, currentOrderGroup, parent);
 
             var sortBy = currentOrderGroup.sortBy;
             if (sortBy) {

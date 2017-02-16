@@ -6,18 +6,21 @@ let _counter = new WeakMap();
 let _orderGroups = new WeakMap();
 
 class OrderGroupModel {
-    constructor (item, items) {
+    constructor (item, key, items) {
         if (_.isPlainObject(item)) {
             _.assign(this, item);
         } else {
-            _.assign(this, { name: item });
+            _.assign(this, { name: item }, items.length - 1 !== key ? { id: item } : {});
         }
-        _orderGroups.set(this, items);
     }
 
     _getSiblings (prevOrNext) {
         const items = _orderGroups.get(this);
         return items[_.findIndex(items, { name: this.name }) + prevOrNext];
+    }
+
+    _setItems (items) {
+        _orderGroups.set(this, items);
     }
 
     get next () {
@@ -32,7 +35,8 @@ class OrderGroupModel {
 class Unflat {
     constructor (data, orderGroup) {
         this.items = data;
-        this.orderGroup = _.map(orderGroup, orderGroupItem => new OrderGroupModel(orderGroupItem, orderGroup));
+        this.orderGroup = _.map(orderGroup, (orderGroupItem, key) => new OrderGroupModel(orderGroupItem, key, orderGroup));
+        _.each(this.orderGroup, orderGroup => orderGroup._setItems(this.orderGroup));
         this.entities = _.reduce(this.orderGroup, (entities, item) => {
             entities[item.name] = [];
             return entities;
@@ -129,7 +133,7 @@ class Unflat {
             return _.each(arr, item => {
                 const tempName = `${currentOrderGroup.name}_temp`;
 
-                item[currentOrderGroup.name] = this.collectEntities(item[tempName], currentOrderGroup);
+                item[currentOrderGroup.name] = this.collectEntities(item[tempName], currentOrderGroup, item);
                 delete item[tempName];
             });
         }
@@ -142,9 +146,9 @@ class Unflat {
     }
 
     // sets chidren, do sort, init model where is getters: parent, parents, removes temp array
-    collectEntities (items, currentOrderGroup) {
+    collectEntities (items, currentOrderGroup, parent) {
         const entities = Unflat.setEntities(items, currentOrderGroup, currentOrderGroup.next);
-        let collection = this.initModels(entities, currentOrderGroup);
+        let collection = this.initModels(entities, currentOrderGroup, parent);
 
         const sortBy = currentOrderGroup.sortBy;
         if (sortBy) {
