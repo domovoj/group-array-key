@@ -6289,21 +6289,9 @@ module.exports = g;
 "use strict";
 
 
-var _dropRight2 = __webpack_require__(63);
-
-var _dropRight3 = _interopRequireDefault(_dropRight2);
-
-var _reduce2 = __webpack_require__(69);
-
-var _reduce3 = _interopRequireDefault(_reduce2);
-
 var _sortBy2 = __webpack_require__(71);
 
 var _sortBy3 = _interopRequireDefault(_sortBy2);
-
-var _isArray2 = __webpack_require__(0);
-
-var _isArray3 = _interopRequireDefault(_isArray2);
 
 var _groupBy2 = __webpack_require__(65);
 
@@ -6321,6 +6309,14 @@ var _keys2 = __webpack_require__(6);
 
 var _keys3 = _interopRequireDefault(_keys2);
 
+var _dropRight2 = __webpack_require__(63);
+
+var _dropRight3 = _interopRequireDefault(_dropRight2);
+
+var _reduce2 = __webpack_require__(69);
+
+var _reduce3 = _interopRequireDefault(_reduce2);
+
 var _forOwn2 = __webpack_require__(64);
 
 var _forOwn3 = _interopRequireDefault(_forOwn2);
@@ -6336,6 +6332,10 @@ var _map3 = _interopRequireDefault(_map2);
 var _size2 = __webpack_require__(70);
 
 var _size3 = _interopRequireDefault(_size2);
+
+var _isArray2 = __webpack_require__(0);
+
+var _isArray3 = _interopRequireDefault(_isArray2);
 
 var _findIndex2 = __webpack_require__(21);
 
@@ -6407,23 +6407,37 @@ var Unflat = function () {
         _classCallCheck(this, Unflat);
 
         this.items = data;
-        if (!(0, _size3.default)(orderGroup)) {
+
+        if (!((0, _isArray3.default)(orderGroup) && (0, _size3.default)(orderGroup))) {
             return;
         }
+
+        // process orderGroup
         this.orderGroup = (0, _map3.default)(orderGroup, function (orderGroupItem, key) {
             return new OrderGroupModel(orderGroupItem, key, orderGroup);
         });
         (0, _each3.default)(this.orderGroup, function (orderGroup) {
             return orderGroup._setItems(_this.orderGroup);
         });
+
+        // init entities
         this.entities = {};
         (0, _forOwn3.default)(this.orderGroup, function (item) {
             return _this.entities[item.name] = [];
         });
+
         _counter.set(this, 0);
         _parents.set(this, {});
 
-        this[this.orderGroup[0].name] = this.unflat();
+        // group data (unflatten)
+        this[this.orderGroup[0].name] = (0, _reduce3.default)(this.orderGroup, function () {
+            for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+                args[_key] = arguments[_key];
+            }
+
+            return _this.deepUnflat.apply(_this, (0, _dropRight3.default)(args));
+        }, this.items);
+
         // set collections for entities
         (0, _each3.default)(orderGroup, function (itemOrderGroup) {
             if (itemOrderGroup.collection) {
@@ -6530,22 +6544,6 @@ var Unflat = function () {
 
             return collection;
         }
-    }, {
-        key: 'unflat',
-        value: function unflat() {
-            var _this5 = this;
-
-            if ((0, _isArray3.default)(this.orderGroup) && (0, _size3.default)(this.orderGroup)) {
-                return (0, _reduce3.default)(this.orderGroup, function () {
-                    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-                        args[_key] = arguments[_key];
-                    }
-
-                    return _this5.deepUnflat.apply(_this5, (0, _dropRight3.default)(args));
-                }, this.items);
-            }
-            return [];
-        }
     }], [{
         key: 'populateEntity',
         value: function populateEntity(tempArr, currentOrderGroup, item, isLast) {
@@ -6558,20 +6556,20 @@ var Unflat = function () {
     }, {
         key: 'setEntities',
         value: function setEntities(arr, currentOrderGroup, nextOrderGroup) {
-            var _this6 = this;
+            var _this5 = this;
 
             var tempArr = [];
 
             // for last
             if (!nextOrderGroup) {
                 (0, _each3.default)(arr, function (item) {
-                    return _this6.populateEntity(tempArr, currentOrderGroup, item, true);
+                    return _this5.populateEntity(tempArr, currentOrderGroup, item, true);
                 });
                 return tempArr;
             }
 
             (0, _each3.default)((0, _groupBy3.default)(arr, currentOrderGroup.id), function (items) {
-                var entity = _this6.populateEntity(tempArr, currentOrderGroup, items[0]);
+                var entity = _this5.populateEntity(tempArr, currentOrderGroup, items[0]);
 
                 entity[nextOrderGroup.name + '_temp'] = items;
             });
@@ -6591,6 +6589,13 @@ var Unflat = function () {
 
     return Unflat;
 }();
+
+/**
+ * @param items
+ * @param orderGroup
+ * @returns {*}
+ */
+
 
 var unflatten = function unflatten(items) {
     for (var _len2 = arguments.length, orderGroup = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {

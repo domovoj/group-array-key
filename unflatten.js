@@ -35,17 +35,25 @@ class OrderGroupModel {
 class Unflat {
     constructor (data, orderGroup) {
         this.items = data;
-        if (!_.size(orderGroup)) {
+
+        if (!(_.isArray(orderGroup) && _.size(orderGroup))) {
             return;
         }
+
+        // process orderGroup
         this.orderGroup = _.map(orderGroup, (orderGroupItem, key) => new OrderGroupModel(orderGroupItem, key, orderGroup));
         _.each(this.orderGroup, orderGroup => orderGroup._setItems(this.orderGroup));
+
+        // init entities
         this.entities = {};
         _.forOwn(this.orderGroup, item => this.entities[item.name] = []);
+
         _counter.set(this, 0);
         _parents.set(this, {});
 
-        this[this.orderGroup[0].name] = this.unflat();
+        // group data (unflatten)
+        this[this.orderGroup[0].name] = _.reduce(this.orderGroup, (...args) => this.deepUnflat.apply(this, _.dropRight(args)), this.items);
+        
         // set collections for entities
         _.each(orderGroup, itemOrderGroup => {
             if (itemOrderGroup.collection) {
@@ -166,15 +174,13 @@ class Unflat {
 
         return collection;
     }
-
-    unflat () {
-        if (_.isArray(this.orderGroup) && _.size(this.orderGroup)) {
-            return _.reduce(this.orderGroup, (...args) => this.deepUnflat.apply(this, _.dropRight(args)), this.items);
-        }
-        return [];
-    }
 }
 
+/**
+ * @param items
+ * @param orderGroup
+ * @returns {*}
+ */
 const unflatten = (items, ...orderGroup) => {
     if (_.isArray(items) && _.size(items)) {
         return new Unflat(items, orderGroup);
