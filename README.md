@@ -36,8 +36,8 @@ unflatten(arr, ...orderGroup);
 ```
 
 **Arguments**
-*arr* `[{}, {}, ..., {}]`: Array of Objects
-*orderGroup* `...(String|Object)`: Params for step by step grouping
+- *arr* `[{}, {}, ..., {}]`: Array of Objects
+- *orderGroup* `...(String|Object)`: Params for step by step grouping
 
 **Returns**
 ``` js
@@ -270,3 +270,4 @@ $ npm install -d && npm test
 ### License
 
 Copyright © 2017, [Yura Levantovych](https://github.com/domovoj).
+Released under the [MIT license]().
