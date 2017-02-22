@@ -40,7 +40,7 @@ unflatten(arr, ...orderGroup);
 - *orderGroup* `...(String|Object)`: Params for step by step grouping
 
 **Returns**
-``` js
+```js
 {
     entities: {}, // Described below
     groupedItems: [], // grouped items
